@@ -1,21 +1,16 @@
 $(function(){
     
     var TABLE_SIZE = 2;
-    var TABLE_ROW = ['A','B','C','D'];
-    var TABLE_COLUMN = [1,2,3,4];
+    var TABLE_ROW = ['A','B'];
+    var TABLE_COLUMN = [1,2];
 
     startApp();
 
     function startApp(){
-        drawGameTable();
-        var gameTable = setInitialGameTable();
-        console.log(gameTable['A1']);
-        console.log(gameTable['A2']);
-        console.log(gameTable['B1']);
-        console.log(gameTable['B2']);
+        drawGameTable( setInitialGameTable() );
     }
 
-    function drawGameTable(){
+    function drawGameTable(gameTable){
         var tableFrame = '';
         var space = '&nbsp;&nbsp;';
 
@@ -24,7 +19,9 @@ $(function(){
                 tableFrame += space;
             }
             for(var j = 0; j < TABLE_SIZE; j++ ){
-                tableFrame += TABLE_ROW[i] + (j+1) + space;
+                tableFrame += 
+                    gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].owner + ':' +
+                    gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].dice + space;
             }
 
             tableFrame += '</br>';
