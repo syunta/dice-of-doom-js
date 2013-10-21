@@ -4,15 +4,18 @@ $(function(){
     var TABLE_ROW = ['A','B'];
     var TABLE_COLUMN = [1,2];
 
+    var currentGameTable = {};
+
     startApp();
 
     function startApp(){
-        drawGameTable( setInitialGameTable() );
+        currentGameTable = setInitialGameTable();
+        drawGameTable(currentGameTable);
     }
 
     function drawGameTable(gameTable){
         var tableFrame = '';
-        var space = '&nbsp;&nbsp;';
+        var space = '&nbsp;&nbsp;&nbsp;';
 
         for(var i = 0; i < TABLE_SIZE; i++){
             for(var j = TABLE_SIZE; i < j; j--){
