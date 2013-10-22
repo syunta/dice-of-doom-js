@@ -3,6 +3,10 @@ $(function(){
     var TABLE_SIZE = 2;
     var TABLE_ROW = ['A','B'];
     var TABLE_COLUMN = [1,2];
+    var TURN = {
+        'A':{next:'B'},
+        'B':{next:'A'}
+    };
 
     var currentGameTable = {};
 
@@ -59,8 +63,8 @@ $(function(){
 
     function makePhaseAction(player,gameTable,depth){
         return {
-            gameTable : gameTable,
-            action    : listPossibleActions(player,gameTable,depth)
+            gameTable      : gameTable,
+            nextActions    : listPossibleActions(player,gameTable,depth)
         };
     }
     
@@ -74,7 +78,7 @@ $(function(){
     }
 
     function nextPlayer(player){
-        return player;
+        return TURN[player].next;
     }
 
     function setInitialGameTable(gameTable){
