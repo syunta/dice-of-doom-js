@@ -177,10 +177,8 @@ $(function(){
         $("body").html(tableFrame);
     }
 
-    $(function(){
-        $("body").on('click','span',function(){
-            getStatus( $(this).attr('id') );
-        });
+    $("body").on('click','span',function(){
+        getStatus( $(this).attr('id') );
     });
 
     function getStatus(id){
