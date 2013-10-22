@@ -50,7 +50,7 @@ $(function(){
 //      var wasPassed = false;
         var depth = 1; // debugging code
 
-        return makePhase(player,'testTable',depth);
+        return makePhase(player,currentGameTable,depth);
     }
 
     function makePhase(player,gameTable,depth){
@@ -75,13 +75,17 @@ $(function(){
     }
     
     function listAttackingHexes(player,gameTable,depth){
-//        var attackingHexes = {};
-//        for(){
-//            if(gameTable[].owner == player){
-//                
-//            }
-//        }
-        return {};        
+        var attackingHexes = [];
+        for(var i = 0; i < TABLE_ROW.length; i++){
+            for(var j = 0; j < TABLE_COLUMN.length; j++){
+                if(gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].owner == player){
+                    if(2 <= gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].dice){
+                        attackingHexes.push(TABLE_ROW[i]+TABLE_COLUMN[j]);
+                    }
+                }
+            }
+        }
+        return attackingHexes;
     }
 
     function listAttackedEnemyHexes(attackingHexes){
