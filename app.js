@@ -50,8 +50,10 @@ $(function(){
             }
             for(var j = 0; j < TABLE_SIZE; j++ ){
                 tableFrame += 
+                    '<span id = ' + TABLE_ROW[i] + TABLE_COLUMN[j] + '>' +
                     gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].owner + ':' +
-                    gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].dice + space;
+                    gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].dice +
+                    '</span>' + space;
             }
 
             tableFrame += '</br>';
@@ -67,11 +69,21 @@ $(function(){
                 gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].dice = getRandom(1,3);
             }
         }
-
         return gameTable;
     }
 
     function getRandom(min,max){
         return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    
+    /* Event */
+    $(function(){
+        $("body").on('click','span',function(){
+            getStatus( $(this).attr('id') );
+        });
+    });
+
+    function getStatus(id){
+        console.log( currentGameTable[id] );
     }
 });
