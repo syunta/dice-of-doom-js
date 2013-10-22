@@ -14,7 +14,7 @@ $(function(){
     function startApp(){
         currentGameTable = setInitialGameTable( createGameTable() );
         drawGameTable(currentGameTable);
-        console.log( JSON.stringify(makeGameTree(),null,4) );
+        console.log( JSON.stringify(makeGameTree(),null,8) );
 //        console.log( makeGameTree() );
     }
 
@@ -62,11 +62,10 @@ $(function(){
     }
 
     function makePhaseAction(player,gameTable,depth){
-        return gameTable;
-//        return {
-//            gameTable      : gameTable,
-//            nextActions    : listActions(player,gameTable,depth)
-//        };
+        return {
+            gameTable      : gameTable,
+            nextActions    : listActions(player,gameTable,depth)
+        };
     }
 
     function listActions(player,gameTable,depth){
@@ -112,7 +111,17 @@ $(function(){
                 }
             }
         }
-        return attackedEnemyHexes;
+        if( $.isEmptyObject(attackedEnemyHexes) ){
+            // call method,makePhase()
+            return turnEnd();
+        }else{
+            return attackedEnemyHexes;
+        }
+    }
+    
+    /* debugging code */
+    function turnEnd(){
+        return {'turn':'end'};
     }
 
     function makeNextGameTable(player,gameTable,attackingHex,attackedHex){
