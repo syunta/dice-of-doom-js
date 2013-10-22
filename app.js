@@ -15,7 +15,8 @@ $(function(){
     function startApp(){
         currentGameTable = setInitialGameTable( createGameTable() );
         drawGameTable(currentGameTable);
-        console.log( makeGameTree() );
+        console.log( JSON.stringify(makeGameTree(),null,4) );
+//        console.log( makeGameTree() );
     }
 
     function createGameTable(){
@@ -48,35 +49,42 @@ $(function(){
     function makeGameTree(){
         var player = 'A';
 //      var wasPassed = false;
-        var depth = 3; // debugging code
+        var depth = 1; // debugging code
 
-        return makePhase(player,currentGameTable,depth);
+        return makePhase(player,'testTable',depth);
     }
 
     function makePhase(player,gameTable,depth){
         return {
             player            : player,
             startingGameTable : gameTable,
-            actions           : makePhaseAction(player,gameTable,depth)
+            actions           : listActions(player,gameTable,depth)
         };
     }
 
     function makePhaseAction(player,gameTable,depth){
         return {
             gameTable      : gameTable,
-            nextActions    : listPossibleActions(player,gameTable,depth)
+            nextActions    : listActions(player,gameTable,depth)
         };
     }
+
+    function listActions(player,gameTable,depth){
+        return listAttackedEnemyHexes(
+            listAttackingHexes(player,gameTable,depth)
+        );
+    }
     
-    function listPossibleActions(player,gameTable,depth){
-        if(depth != 0){
-            depth -= 1;
-            return makePhase(nextPlayer(player),gameTable,depth);
-        }else{
-            return null;
-        }
+    function listAttackingHexes(player,gameTable,depth){
+        //TODO
+        return null;
     }
 
+    function listAttackedEnemyHexes(attackingHex){
+        //TODO
+        return {};
+    }
+    
     function nextPlayer(player){
         return TURN[player].next;
     }
