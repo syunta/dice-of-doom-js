@@ -11,6 +11,7 @@ $(function(){
     function startApp(){
         currentGameTable = setInitialGameTable( createGameTable() );
         drawGameTable(currentGameTable);
+        console.log( makeGameTree() );
     }
 
     function createGameTable(){
@@ -40,6 +41,58 @@ $(function(){
         return gameTable;
     }
 
+    function makeGameTree(){
+        var player = 'A';
+//      var wasPassed = false;
+        var depth = 3; // debugging code
+
+        return makePhase(player,currentGameTable,depth);
+    }
+
+    function makePhase(player,gameTable,depth){
+        return {
+            player            : player,
+            startingGameTable : gameTable,
+            actions           : makePhaseAction(player,gameTable,depth)
+        };
+    }
+
+    function makePhaseAction(player,gameTable,depth){
+        return {
+            gameTable : gameTable,
+            action    : listPossibleActions(player,gameTable,depth)
+        };
+    }
+    
+    function listPossibleActions(player,gameTable,depth){
+        if(depth != 0){
+            depth -= 1;
+            return makePhase(nextPlayer(player),gameTable,depth);
+        }else{
+            return null;
+        }
+    }
+
+    function nextPlayer(player){
+        return player;
+    }
+
+    function setInitialGameTable(gameTable){
+        var players = ['A','B'];
+        for(var i = 0; i < TABLE_SIZE; i++){
+            for(var j = 0; j < TABLE_SIZE; j++){
+                gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].owner = players[getRandom(0,1)];
+                gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].dice = getRandom(1,3);
+            }
+        }
+        return gameTable;
+    }
+
+    function getRandom(min,max){
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    
+    /* UI */
     function drawGameTable(gameTable){
         var tableFrame = '';
         var space = '&nbsp;&nbsp;&nbsp;';
@@ -61,22 +114,6 @@ $(function(){
         $("body").html(tableFrame);
     }
 
-    function setInitialGameTable(gameTable){
-        var players = ['A','B'];
-        for(var i = 0; i < TABLE_SIZE; i++){
-            for(var j = 0; j < TABLE_SIZE; j++){
-                gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].owner = players[getRandom(0,1)];
-                gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].dice = getRandom(1,3);
-            }
-        }
-        return gameTable;
-    }
-
-    function getRandom(min,max){
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-    
-    /* Event */
     $(function(){
         $("body").on('click','span',function(){
             getStatus( $(this).attr('id') );
