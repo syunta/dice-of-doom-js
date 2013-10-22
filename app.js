@@ -1,6 +1,5 @@
 $(function(){
     
-    var TABLE_SIZE = 2;
     var TABLE_ROW = ['A','B'];
     var TABLE_COLUMN = [1,2];
     var TURN = {
@@ -76,13 +75,18 @@ $(function(){
     }
     
     function listAttackingHexes(player,gameTable,depth){
-        //TODO
-        return null;
+//        var attackingHexes = {};
+//        for(){
+//            if(gameTable[].owner == player){
+//                
+//            }
+//        }
+        return {};        
     }
 
-    function listAttackedEnemyHexes(attackingHex){
+    function listAttackedEnemyHexes(attackingHexes){
         //TODO
-        return {};
+        return attackingHexes;
     }
     
     function nextPlayer(player){
@@ -91,8 +95,8 @@ $(function(){
 
     function setInitialGameTable(gameTable){
         var players = ['A','B'];
-        for(var i = 0; i < TABLE_SIZE; i++){
-            for(var j = 0; j < TABLE_SIZE; j++){
+        for(var i = 0; i < TABLE_ROW.length; i++){
+            for(var j = 0; j < TABLE_COLUMN.length; j++){
                 gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].owner = players[getRandom(0,1)];
                 gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].dice = getRandom(1,3);
             }
@@ -109,11 +113,11 @@ $(function(){
         var tableFrame = '';
         var space = '&nbsp;&nbsp;&nbsp;';
 
-        for(var i = 0; i < TABLE_SIZE; i++){
-            for(var j = TABLE_SIZE; i < j; j--){
+        for(var i = 0; i < TABLE_ROW.length; i++){
+            for(var j = TABLE_COLUMN.length; i < j; j--){
                 tableFrame += space;
             }
-            for(var j = 0; j < TABLE_SIZE; j++ ){
+            for(var j = 0; j < TABLE_COLUMN.length; j++ ){
                 tableFrame += 
                     '<span id = ' + TABLE_ROW[i] + TABLE_COLUMN[j] + '>' +
                     gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].owner + ':' +
