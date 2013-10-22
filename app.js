@@ -62,7 +62,7 @@ $(function(){
     }
 
     function makePhaseAction(player,gameTable,depth){
-        return 'test';
+        return gameTable;
 //        return {
 //            gameTable      : gameTable,
 //            nextActions    : listActions(player,gameTable,depth)
@@ -100,7 +100,12 @@ $(function(){
                     if(gameTable[ linkedHexes[j] ].dice < gameTable[ attackingHexes[i] ].dice){ //ver1 rule
                         attackedEnemyHexes[ attackingHexes[i] + '->' +linkedHexes[j] ] = makePhaseAction(
                             player,
-                            makeNextGameTable(gameTable),
+                            makeNextGameTable(
+                                player,
+                                gameTable,
+                                attackingHexes[i],
+                                linkedHexes[j]
+                            ),
                             depth
                         );
                     }
@@ -110,8 +115,16 @@ $(function(){
         return attackedEnemyHexes;
     }
 
-    function makeNextGameTable(gameTable){
-        return gameTable;
+    function makeNextGameTable(player,gameTable,attackingHex,attackedHex){
+        var nextGameTable = $.extend(true,{},gameTable);
+       
+        nextGameTable[attackedHex].owner = player;
+
+        var dice = nextGameTable[attackingHex].dice;
+        nextGameTable[attackingHex].dice = 1;
+        nextGameTable[attackedHex].dice = dice - 1;
+
+        return nextGameTable;
     }
 
     function nextPlayer(player){
@@ -132,7 +145,7 @@ $(function(){
     function getRandom(min,max){
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
-    
+
     /* UI */
     function drawGameTable(gameTable){
         var tableFrame = '';
