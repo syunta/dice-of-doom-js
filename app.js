@@ -70,11 +70,11 @@ $(function(){
 
     function listActions(player,gameTable,depth){
         return listAttackedEnemyHexes(
-            listAttackingHexes(player,gameTable,depth)
+            player,gameTable,listAttackingHexes(player,gameTable)
         );
     }
     
-    function listAttackingHexes(player,gameTable,depth){
+    function listAttackingHexes(player,gameTable){
         var attackingHexes = [];
         for(var i = 0; i < TABLE_ROW.length; i++){
             for(var j = 0; j < TABLE_COLUMN.length; j++){
@@ -88,11 +88,21 @@ $(function(){
         return attackingHexes;
     }
 
-    function listAttackedEnemyHexes(attackingHexes){
-        //TODO
-        return attackingHexes;
+    function listAttackedEnemyHexes(player,gameTable,attackingHexes){
+        var attackedEnemyHexes = {};
+        for(var i = 0; i < attackingHexes.length; i++){
+            var linkedHexes = gameTable[ attackingHexes[i] ].link;
+            for(var j = 0; j < linkedHexes.length; j++){
+                if(gameTable[ linkedHexes[j] ].owner != player){
+                    if(gameTable[ linkedHexes[j] ].dice < gameTable[ attackingHexes[i] ].dice){ //ver1 rule
+                        attackedEnemyHexes[ attackingHexes[i] ] = linkedHexes[j];
+                    }
+                }
+            }
+        }
+        return attackedEnemyHexes;
     }
-    
+
     function nextPlayer(player){
         return TURN[player].next;
     }
