@@ -62,15 +62,18 @@ $(function(){
     }
 
     function makePhaseAction(player,gameTable,depth){
-        return {
-            gameTable      : gameTable,
-            nextActions    : listActions(player,gameTable,depth)
-        };
+        return 'test';
+//        return {
+//            gameTable      : gameTable,
+//            nextActions    : listActions(player,gameTable,depth)
+//        };
     }
 
     function listActions(player,gameTable,depth){
         return listAttackedEnemyHexes(
-            player,gameTable,listAttackingHexes(player,gameTable)
+            player,
+            gameTable,listAttackingHexes(player,gameTable),
+            depth
         );
     }
     
@@ -88,19 +91,27 @@ $(function(){
         return attackingHexes;
     }
 
-    function listAttackedEnemyHexes(player,gameTable,attackingHexes){
+    function listAttackedEnemyHexes(player,gameTable,attackingHexes,depth){
         var attackedEnemyHexes = {};
         for(var i = 0; i < attackingHexes.length; i++){
             var linkedHexes = gameTable[ attackingHexes[i] ].link;
             for(var j = 0; j < linkedHexes.length; j++){
                 if(gameTable[ linkedHexes[j] ].owner != player){
                     if(gameTable[ linkedHexes[j] ].dice < gameTable[ attackingHexes[i] ].dice){ //ver1 rule
-                        attackedEnemyHexes[ attackingHexes[i] ] = linkedHexes[j];
+                        attackedEnemyHexes[ attackingHexes[i] + '->' +linkedHexes[j] ] = makePhaseAction(
+                            player,
+                            makeNextGameTable(gameTable),
+                            depth
+                        );
                     }
                 }
             }
         }
         return attackedEnemyHexes;
+    }
+
+    function makeNextGameTable(gameTable){
+        return gameTable;
     }
 
     function nextPlayer(player){
