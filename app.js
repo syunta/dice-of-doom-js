@@ -1,6 +1,6 @@
 $(function(){
     
-    var TABLE_SIZE = 30;
+    var TABLE_SIZE = 2;
     var TURN = {
         'A':{next:'B'},
         'B':{next:'A'}
@@ -11,7 +11,7 @@ $(function(){
     startApp();
 
     function startApp(){
-        currentGameTable = createGameTable();
+        currentGameTable = setInitialGameTable( createGameTable() );
         drawGameTable(currentGameTable);
 //        console.log( JSON.stringify(makeGameTree(),null,8) );
 //        console.log( makeGameTree() );
@@ -30,7 +30,7 @@ $(function(){
                     gameTable[x][y] = {};
                 }else{
                     gameTable[x][y] = {
-                        owner : 'A',
+                        owner : null,
                         dice  : 0
                     };
                 }
@@ -165,10 +165,10 @@ $(function(){
 
     function setInitialGameTable(gameTable){
         var players = ['A','B'];
-        for(var i = 0; i < TABLE_ROW.length; i++){
-            for(var j = 0; j < TABLE_COLUMN.length; j++){
-                gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].owner = players[getRandom(0,1)];
-                gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].dice = getRandom(1,3);
+        for(var x = 1; x <= TABLE_SIZE; x++){
+            for(var y = 1; y <= TABLE_SIZE; y++){
+                gameTable[x][y].owner = players[getRandom(0,1)];
+                gameTable[x][y].dice = getRandom(1,3);
             }
         }
         return gameTable;
