@@ -30,6 +30,8 @@ $(function(){
                     gameTable[x][y] = {};
                 }else{
                     gameTable[x][y] = {
+                        x     : x,
+                        y     : y,
                         owner : null,
                         dice  : 0
                     };
@@ -50,22 +52,34 @@ $(function(){
     
     function getUpwardHexes(gameTable,x,y){
         var upwardHexes = [];
-        upwardHexes.push(gameTable[x+1][y+1]);
-        upwardHexes.push(gameTable[x][y+1]);
+        if(!$.isEmptyObject(gameTable[x+1][y+1])){
+            upwardHexes.push(gameTable[x+1][y+1]);
+        }
+        if(!$.isEmptyObject(gameTable[x][y+1])){
+            upwardHexes.push(gameTable[x][y+1]);
+        }
         return upwardHexes;
     }
 
     function getHorizontalHexes(gameTable,x,y){
         var horizontalHexes = [];
-        horizontalHexes.push(gameTable[x-1][y]);
-        horizontalHexes.push(gameTable[x+1][y]);
+        if(!$.isEmptyObject(gameTable[x-1][y])){
+            horizontalHexes.push(gameTable[x-1][y]);
+        }
+        if(!$.isEmptyObject(gameTable[x+1][y])){
+            horizontalHexes.push(gameTable[x+1][y]);
+        }
         return horizontalHexes;
     }
 
     function getDownwardHexes(gameTable,x,y){
         var downwardHexes =[];
-        downwardHexes.push(gameTable[x][y-1]);
-        downwardHexes.push(gameTable[x-1][y-1]);
+        if(!$.isEmptyObject(gameTable[x][y-1])){
+            downwardHexes.push(gameTable[x][y-1]);
+        }
+        if(!$.isEmptyObject(gameTable[x-1][y-1])){
+            downwardHexes.push(gameTable[x-1][y-1]);
+        }
         return downwardHexes;
     }
 
@@ -93,19 +107,18 @@ $(function(){
     }
 
     function listActions(player,gameTable,depth){
-        return listAttackingHexes(player,gameTable);
-//        return listAttackedEnemyHexes(
-//            player,
-//            gameTable,
-//            listAttackingHexes(player,gameTable),
-//            depth
-//        );
+        return listAttackedEnemyHexes(
+            player,
+            gameTable,
+            listAttackingHexes(player,gameTable),
+            depth
+        );
     }
     
     function listAttackingHexes(player,gameTable){
         var attackingHexes = [];
-        for(var y = 0; y <= TABLE_SIZE; y++){
-            for(var x = 0; x <= TABLE_SIZE; x++){
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
                 if(gameTable[x][y].owner == player){
                     if(2 <= gameTable[x][y].dice){
                         attackingHexes.push({x:x, y:y});
@@ -119,11 +132,16 @@ $(function(){
     function listAttackedEnemyHexes(player,gameTable,attackingHexes,depth){
         var attackedEnemyHexes = {};
         for(var i = 0; i < attackingHexes.length; i++){
-            var linkedHexes = gameTable[ attackingHexes[i] ].link;
+            var linkedHexes = getLinkedHexes(gameTable,attackingHexes[i].x,attackingHexes[i].y);
+            console.log(JSON.stringify( attackingHexes[i].x,null,8) );
             for(var j = 0; j < linkedHexes.length; j++){
-                if(gameTable[ linkedHexes[j] ].owner != player){
-                    if(gameTable[ linkedHexes[j] ].dice < gameTable[ attackingHexes[i] ].dice){ //ver1 rule
-                        attackedEnemyHexes[ attackingHexes[i] + '->' +linkedHexes[j] ] = makePhaseAction(
+                console.log(JSON.stringify( linkedHexes,null,8) );
+                if(gameTable[attackingHexes[i].x][linkedHexes[j].y].owner != player){
+                    if( // ver1 rule
+                        gameTable[attackingHexes[i].x][attackingHexes[i].y].dice <
+                        gameTable[linkedHexes[j].x][linkedHexes[j].y].dice
+                    ){
+                        attackedEnemyHexes[ attackingHexes[i].x + '->' + linkedHexes[j].id ] = makePhaseAction(
                             player,
                             makeNextGameTable(
                                 player,
@@ -137,12 +155,12 @@ $(function(){
                 }
             }
         }
-        if( $.isEmptyObject(attackedEnemyHexes) ){
-            // call method,makePhase()
-            return turnEnd();
-        }else{
-            return attackedEnemyHexes;
-        }
+//        if( $.isEmptyObject(attackedEnemyHexes) ){
+//            // call method,makePhase()
+//            return turnEnd();
+//        }else{
+//            return attackedEnemyHexes;
+//        }
     }
     
     function turnEnd(){ // debbuging code
