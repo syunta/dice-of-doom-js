@@ -132,36 +132,32 @@ $(function(){
         var attackedEnemyHexes = {};
         for(var i = 0; i < attackingHexes.length; i++){
             var linkedHexes = getLinkedHexes(gameTable,attackingHexes[i].x,attackingHexes[i].y);
-            
-            console.log( JSON.stringify(linkedHexes,null,8) );
-
             for(var j = 0; j < linkedHexes.length; j++){
                 if(linkedHexes[j].owner != player){
                     if( linkedHexes[j].dice < attackingHexes[i].dice ){ //ver1 rule
                         attackedEnemyHexes[
                             attackingHexes[i].x + ':' + attackingHexes[i].y + '->' +
                             linkedHexes[j].x + ':' + linkedHexes[j].y
-                        ] = 'test';
-//                            makePhaseAction(
-//                            player,
-//                            makeNextGameTable(
-//                                player,
-//                                gameTable,
-//                                attackingHexes[i],
-//                                linkedHexes[j]
-//                            ),
-//                            depth
-//                        );
+                        ] = makePhaseAction(
+                            player,
+                            makeNextGameTable(
+                                player,
+                                gameTable,
+                                attackingHexes[i],
+                                linkedHexes[j]
+                            ),
+                            depth
+                        );
                     }
                 }
             }
         }
-//        if( $.isEmptyObject(attackedEnemyHexes) ){
-//            // call method,makePhase()
-//            return turnEnd();
-//        }else{
+        if( $.isEmptyObject(attackedEnemyHexes) ){
+            // call method,makePhase()
+            return turnEnd();
+        }else{
             return attackedEnemyHexes;
-//        }
+        }
     }
     
     function turnEnd(){ // debbuging code
@@ -171,11 +167,11 @@ $(function(){
     function makeNextGameTable(player,gameTable,attackingHex,attackedHex){
         var nextGameTable = $.extend(true,{},gameTable);
        
-        nextGameTable[attackedHex].owner = player;
+        nextGameTable[attackedHex.x][attackedHex.y].owner = player;
 
-        var dice = nextGameTable[attackingHex].dice;
-        nextGameTable[attackingHex].dice = 1;
-        nextGameTable[attackedHex].dice = dice - 1;
+        var dice = nextGameTable[attackingHex.x][attackingHex.y].dice;
+        nextGameTable[attackingHex.x][attackingHex.y].dice = 1;
+        nextGameTable[attackedHex.x][attackedHex.y].dice = dice - 1;
 
         return nextGameTable;
     }
@@ -215,7 +211,6 @@ $(function(){
                     gameTable[x][y].dice +
                     '</span>' + space;
             }
-
             tableFrame += '</br>';
         }
         $("body").html(tableFrame);
