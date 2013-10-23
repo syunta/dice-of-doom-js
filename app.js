@@ -13,9 +13,10 @@ $(function(){
     function startApp(){
         currentGameTable = setInitialGameTable( createGameTable() );
         drawGameTable(currentGameTable);
-        console.log( JSON.stringify(makeGameTree(),null,8) );
+        console.log( JSON.stringify(makeGameTree('A',currentGameTable,false,1),null,8) );
     }
 
+    /* Data Structure*/
     function createGameTable(){
         var gameTable = [];
         for(var x = 0; x <= TABLE_SIZE+1; x++){
@@ -81,40 +82,59 @@ $(function(){
         }
         return downwardHexes;
     }
-
-    function makeGameTree(){
-        var player = 'A';
-//      var wasPassed = false;
-        var depth = 1; // debugging code
-
-        return makePhase(player,currentGameTable,depth);
+    
+    /* Game Engine */
+    function makeGameTree(player,gameTable,wasPassed,depth){
+        return makePhase(player,gameTable,wasPassed,depth);
     }
 
-    function makePhase(player,gameTable,depth){
-        return {
-            player            : player,
-            startingGameTable : gameTable,
-            actions           : listActions(player,gameTable,depth)
-        };
-    }
+    function makePhase(player,gameTable,wasPassed,depth){
 
-    function makePhaseAction(player,gameTable,depth){
-        return {
-            gameTable      : gameTable,
-            nextActions    : listActions(player,gameTable,depth)
-        };
-    }
-
-    function listActions(player,gameTable,depth){
-        return listAttackedEnemyHexes(
+        var justAfterAction = listAttackerAndBlocker(
             player,
             gameTable,
-            listAttackingHexes(player,gameTable),
+            listAttacker(player,gameTable),
+            wasPassed,
+            depth
+        );
+        return justAfterAction;
+
+//        if(0 < justAfterAction.length){
+//            return {
+//                player            : player,
+//                startingGameTable : gameTable,
+//                actions           : listActions(player,gameTable,resetPass(),depth)
+//            };
+//        }else{
+//            if(wasPassed == false){
+//                return {
+//                    action     : player + ' is Passed.',
+//                    nextPlayer : makePhase(nextPlayer(player),gameTable,forciblyPass(),depth)
+//                };
+//            }else{
+//                return gameOver();
+//            }
+//        }
+    }
+
+    function makePhaseAction(player,gameTable,wasPassed,depth){
+        return {
+            gameTable      : gameTable,
+            nextActions    : listActions(player,gameTable,wasPassed,depth)
+        };
+    }
+
+    function listActions(player,gameTable,wasPassed,depth){
+        return listAttackerAndBlocker(
+            player,
+            gameTable,
+            listAttacker(player,gameTable),
+            wasPassed,
             depth
         );
     }
     
-    function listAttackingHexes(player,gameTable){
+    function listAttacker(player,gameTable){
         var attackingHexes = [];
         for(var y = 1; y <= TABLE_SIZE; y++){
             for(var x = 1; x <= TABLE_SIZE; x++){
@@ -128,40 +148,52 @@ $(function(){
         return attackingHexes;
     }
 
-    function listAttackedEnemyHexes(player,gameTable,attackingHexes,depth){
-        var attackedEnemyHexes = {};
+    function listAttackerAndBlocker(player,gameTable,attackingHexes,wasPassed,depth){
+        var attackedEnemyHexes = [];
         for(var i = 0; i < attackingHexes.length; i++){
             var linkedHexes = getLinkedHexes(gameTable,attackingHexes[i].x,attackingHexes[i].y);
             for(var j = 0; j < linkedHexes.length; j++){
                 if(linkedHexes[j].owner != player){
                     if( linkedHexes[j].dice < attackingHexes[i].dice ){ //ver1 rule
-                        attackedEnemyHexes[
-                            attackingHexes[i].x + ':' + attackingHexes[i].y + '->' +
-                            linkedHexes[j].x + ':' + linkedHexes[j].y
-                        ] = makePhaseAction(
-                            player,
-                            makeNextGameTable(
-                                player,
-                                gameTable,
-                                attackingHexes[i],
-                                linkedHexes[j]
-                            ),
-                            depth
-                        );
+                        attackedEnemyHexes.push(linkedHexes[j]);
+//                        attackedEnemyHexes[
+//                            attackingHexes[i].x + ':' + attackingHexes[i].y + '->' +
+//                            linkedHexes[j].x + ':' + linkedHexes[j].y
+//                        ] = makePhaseAction(
+//                            player,
+//                            makeNextGameTable(
+//                                player,
+//                                gameTable,
+//                                attackingHexes[i],
+//                                linkedHexes[j]
+//                            ),
+//                            depth
+//                        );
                     }
                 }
             }
         }
-        if( $.isEmptyObject(attackedEnemyHexes) ){
-            // call method,makePhase()
-            return turnEnd();
-        }else{
-            return attackedEnemyHexes;
-        }
+        return attackedEnemyHexes;
+//        if( $.isEmptyObject(attackedEnemyHexes) ){
+//            return {
+//                action   : 'active pass',
+//                nextTurn : makePhase(nextPlayer(player),gameTable,wasPassed,depth)
+//            };
+//        }else{
+//            return attackedEnemyHexes;
+//        }
+    }
+
+    function forciblyPass(){
+        return true;
+    }
+
+    function resetPass(){
+        return false;
     }
     
-    function turnEnd(){ // debbuging code
-        return {turn:'end'};
+    function gameOver(){ // debbuging code
+        return {Game:'Over'};
     }
 
     function makeNextGameTable(player,gameTable,attackingHex,attackedHex){
@@ -181,13 +213,22 @@ $(function(){
     }
 
     function setInitialGameTable(gameTable){
-        var players = ['A','B'];
-        for(var x = 1; x <= TABLE_SIZE; x++){
-            for(var y = 1; y <= TABLE_SIZE; y++){
-                gameTable[x][y].owner = players[getRandom(0,1)];
-                gameTable[x][y].dice = getRandom(1,3);
-            }
-        }
+//        var players = ['A','B'];
+//        for(var x = 1; x <= TABLE_SIZE; x++){
+//            for(var y = 1; y <= TABLE_SIZE; y++){
+//                gameTable[x][y].owner = players[getRandom(0,1)];
+//                gameTable[x][y].dice = getRandom(1,3);
+//            }
+//        }
+        gameTable[1][1].owner = 'B';
+        gameTable[1][2].owner = 'B';
+        gameTable[2][1].owner = 'A';
+        gameTable[2][2].owner = 'A';
+        gameTable[1][1].dice = 1;
+        gameTable[1][2].dice = 1;
+        gameTable[2][1].dice = 2;
+        gameTable[2][2].dice = 2;
+
         return gameTable;
     }
 
