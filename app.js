@@ -1,7 +1,6 @@
 $(function(){
     
-    var TABLE_ROW = ['A','B'];
-    var TABLE_COLUMN = [1,2];
+    var TABLE_SIZE = 5;
     var TURN = {
         'A':{next:'B'},
         'B':{next:'A'}
@@ -12,37 +11,65 @@ $(function(){
     startApp();
 
     function startApp(){
-        currentGameTable = setInitialGameTable( createGameTable() );
-        drawGameTable(currentGameTable);
-        console.log( JSON.stringify(makeGameTree(),null,8) );
+        var gameTable = createGameTable();
+        console.log( JSON.stringify(gameTable,null,8) );
+        console.log( JSON.stringify(getLinkedHexes(gameTable,1,1),null,8) );
+//        currentGameTable = setInitialGameTable( createGameTable() );
+//        drawGameTable(currentGameTable);
+//        console.log( JSON.stringify(makeGameTree(),null,8) );
 //        console.log( makeGameTree() );
     }
 
     function createGameTable(){
-        var gameTable = {
-            'A1':{
-                owner:null,
-                dice:0,
-                link:['A2','B1','B2']
-            },
-            'A2':{
-                owner:null,
-                dice:0,
-                link:['A1','B2']
-            },
-            'B1':{
-                owner:null,
-                dice:0,
-                link:['A1','B2']
-            },
-            'B2':{
-                owner:null,
-                dice:0,
-                link:['A1','A2','B1']
+        var gameTable = [];
+        for(var x = 0; x <= TABLE_SIZE+1; x++){
+            gameTable[x] = [];
+        }
+        for(var y = 0; y <= TABLE_SIZE+1; y++){
+            for(var x = 0; x <= TABLE_SIZE+1; x++){
+                if(y == 0 || x == 0){
+                    gameTable[x][y] = {};
+                }else if(y == TABLE_SIZE+1 || x == TABLE_SIZE+1){
+                    gameTable[x][y] = {};
+                }else{
+                    gameTable[x][y] = {
+                        owner : x, // debbuging code
+                        dice  : y  // debbuging code
+                    };
+                }
             }
-        }; 
-
+        }
         return gameTable;
+    }
+    
+    function getLinkedHexes(gameTable,x,y){
+        var linkedHexes 
+            = getUpwardHexes(gameTable,x,y).concat(
+                getHorizontalHexes(gameTable,x,y),
+                getDownwardHexes(gameTable,x,y)
+              );
+        return linkedHexes;
+    }
+    
+    function getUpwardHexes(gameTable,x,y){
+        var upwardHexes = [];
+        upwardHexes.push(gameTable[x+1][y+1]);
+        upwardHexes.push(gameTable[x][y+1]);
+        return upwardHexes;
+    }
+
+    function getHorizontalHexes(gameTable,x,y){
+        var horizontalHexes = [];
+        horizontalHexes.push(gameTable[x-1][y]);
+        horizontalHexes.push(gameTable[x+1][y]);
+        return horizontalHexes;
+    }
+
+    function getDownwardHexes(gameTable,x,y){
+        var downwardHexes =[];
+        downwardHexes.push(gameTable[x][y-1]);
+        downwardHexes.push(gameTable[x-1][y-1]);
+        return downwardHexes;
     }
 
     function makeGameTree(){
