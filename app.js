@@ -135,37 +135,40 @@ $(function(){
     }
     
     function listAttacker(player,gameTable){
-        var attackingHexes = [];
+        var attacker = [];
         for(var y = 1; y <= TABLE_SIZE; y++){
             for(var x = 1; x <= TABLE_SIZE; x++){
                 if(gameTable[x][y].owner == player){
                     if(2 <= gameTable[x][y].dice){
-                        attackingHexes.push(gameTable[x][y]);
+                        attacker.push(gameTable[x][y]);
                     }
                 }
             }
         }
-        return attackingHexes;
+        return attacker;
     }
 
-    function listAttackerAndBlocker(player,gameTable,attackingHexes,wasPassed,depth){
-        var attackedEnemyHexes = [];
-        for(var i = 0; i < attackingHexes.length; i++){
-            var linkedHexes = getLinkedHexes(gameTable,attackingHexes[i].x,attackingHexes[i].y);
-            for(var j = 0; j < linkedHexes.length; j++){
-                if(linkedHexes[j].owner != player){
-                    if( linkedHexes[j].dice < attackingHexes[i].dice ){ //ver1 rule
-                        attackedEnemyHexes.push(linkedHexes[j]);
-//                        attackedEnemyHexes[
-//                            attackingHexes[i].x + ':' + attackingHexes[i].y + '->' +
-//                            linkedHexes[j].x + ':' + linkedHexes[j].y
+    function listAttackerAndBlocker(player,gameTable,attacker,wasPassed,depth){
+        var attackerAndBlocker = [];
+        for(var i = 0; i < attacker.length; i++){
+            var blocker = getLinkedHexes(gameTable,attacker[i].x,attacker[i].y);
+            for(var j = 0; j < blocker.length; j++){
+                if(blocker[j].owner != player){
+                    if( blocker[j].dice < attacker[i].dice ){ //ver1 rule
+                        attackerAndBlocker.push({
+                            attacker : attacker[i],
+                            blocker  : blocker[j]
+                        });
+//                        attackerAndBlocker[
+//                            attacker[i].x + ':' + attacker[i].y + '->' +
+//                            blocker[j].x + ':' + blocker[j].y
 //                        ] = makePhaseAction(
 //                            player,
 //                            makeNextGameTable(
 //                                player,
 //                                gameTable,
-//                                attackingHexes[i],
-//                                linkedHexes[j]
+//                                attacker[i],
+//                                blocker[j]
 //                            ),
 //                            depth
 //                        );
@@ -173,14 +176,14 @@ $(function(){
                 }
             }
         }
-        return attackedEnemyHexes;
-//        if( $.isEmptyObject(attackedEnemyHexes) ){
+        return attackerAndBlocker;
+//        if( $.isEmptyObject(attackerAndBlocker) ){
 //            return {
 //                action   : 'active pass',
 //                nextTurn : makePhase(nextPlayer(player),gameTable,wasPassed,depth)
 //            };
 //        }else{
-//            return attackedEnemyHexes;
+//            return attackerAndBlocker;
 //        }
     }
 
