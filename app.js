@@ -14,7 +14,6 @@ $(function(){
         currentGameTable = setInitialGameTable( createGameTable() );
         drawGameTable(currentGameTable);
         console.log( JSON.stringify(makeGameTree(),null,8) );
-//        console.log( makeGameTree() );
     }
 
     function createGameTable(){
@@ -121,7 +120,7 @@ $(function(){
             for(var x = 1; x <= TABLE_SIZE; x++){
                 if(gameTable[x][y].owner == player){
                     if(2 <= gameTable[x][y].dice){
-                        attackingHexes.push({x:x, y:y});
+                        attackingHexes.push(gameTable[x][y]);
                     }
                 }
             }
@@ -133,24 +132,26 @@ $(function(){
         var attackedEnemyHexes = {};
         for(var i = 0; i < attackingHexes.length; i++){
             var linkedHexes = getLinkedHexes(gameTable,attackingHexes[i].x,attackingHexes[i].y);
-            console.log(JSON.stringify( attackingHexes[i].x,null,8) );
+            
+            console.log( JSON.stringify(linkedHexes,null,8) );
+
             for(var j = 0; j < linkedHexes.length; j++){
-                console.log(JSON.stringify( linkedHexes,null,8) );
-                if(gameTable[attackingHexes[i].x][linkedHexes[j].y].owner != player){
-                    if( // ver1 rule
-                        gameTable[attackingHexes[i].x][attackingHexes[i].y].dice <
-                        gameTable[linkedHexes[j].x][linkedHexes[j].y].dice
-                    ){
-                        attackedEnemyHexes[ attackingHexes[i].x + '->' + linkedHexes[j].id ] = makePhaseAction(
-                            player,
-                            makeNextGameTable(
-                                player,
-                                gameTable,
-                                attackingHexes[i],
-                                linkedHexes[j]
-                            ),
-                            depth
-                        );
+                if(linkedHexes[j].owner != player){
+                    if( linkedHexes[j].dice < attackingHexes[i].dice ){ //ver1 rule
+                        attackedEnemyHexes[
+                            attackingHexes[i].x + ':' + attackingHexes[i].y + '->' +
+                            linkedHexes[j].x + ':' + linkedHexes[j].y
+                        ] = 'test';
+//                            makePhaseAction(
+//                            player,
+//                            makeNextGameTable(
+//                                player,
+//                                gameTable,
+//                                attackingHexes[i],
+//                                linkedHexes[j]
+//                            ),
+//                            depth
+//                        );
                     }
                 }
             }
@@ -159,7 +160,7 @@ $(function(){
 //            // call method,makePhase()
 //            return turnEnd();
 //        }else{
-//            return attackedEnemyHexes;
+            return attackedEnemyHexes;
 //        }
     }
     
