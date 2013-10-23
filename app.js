@@ -2,8 +2,8 @@ $(function(){
     
     var TABLE_SIZE = 2;
     var TURN = {
-        'A':{next:'B'},
-        'B':{next:'A'}
+        A:{next:'B'},
+        B:{next:'A'}
     };
 
     var currentGameTable = {};
@@ -13,7 +13,7 @@ $(function(){
     function startApp(){
         currentGameTable = setInitialGameTable( createGameTable() );
         drawGameTable(currentGameTable);
-//        console.log( JSON.stringify(makeGameTree(),null,8) );
+        console.log( JSON.stringify(makeGameTree(),null,8) );
 //        console.log( makeGameTree() );
     }
 
@@ -93,20 +93,22 @@ $(function(){
     }
 
     function listActions(player,gameTable,depth){
-        return listAttackedEnemyHexes(
-            player,
-            gameTable,listAttackingHexes(player,gameTable),
-            depth
-        );
+        return listAttackingHexes(player,gameTable);
+//        return listAttackedEnemyHexes(
+//            player,
+//            gameTable,
+//            listAttackingHexes(player,gameTable),
+//            depth
+//        );
     }
     
     function listAttackingHexes(player,gameTable){
         var attackingHexes = [];
-        for(var i = 0; i < TABLE_ROW.length; i++){
-            for(var j = 0; j < TABLE_COLUMN.length; j++){
-                if(gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].owner == player){
-                    if(2 <= gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].dice){
-                        attackingHexes.push(TABLE_ROW[i]+TABLE_COLUMN[j]);
+        for(var y = 0; y <= TABLE_SIZE; y++){
+            for(var x = 0; x <= TABLE_SIZE; x++){
+                if(gameTable[x][y].owner == player){
+                    if(2 <= gameTable[x][y].dice){
+                        attackingHexes.push({x:x, y:y});
                     }
                 }
             }
@@ -144,7 +146,7 @@ $(function(){
     }
     
     function turnEnd(){ // debbuging code
-        return {'turn':'end'};
+        return {turn:'end'};
     }
 
     function makeNextGameTable(player,gameTable,attackingHex,attackedHex){
@@ -183,11 +185,11 @@ $(function(){
         var tableFrame = '';
         var space = '&nbsp;&nbsp;&nbsp;';
 
-        for(var x = 1; x <= TABLE_SIZE; x++){
-            for(var y = TABLE_SIZE; x <= y; y--){
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = TABLE_SIZE; y <= x; x--){
                 tableFrame += space;
             }
-            for(var y = 1; y <= TABLE_SIZE; y++ ){
+            for(var x = 1; x <= TABLE_SIZE; x++ ){
                 tableFrame += 
                     '<span id = ' + x + y + '>' +
                     gameTable[x][y].owner + ':' +
@@ -205,6 +207,8 @@ $(function(){
     });
 
     function getStatus(id){
-        console.log( currentGameTable[id] );
+        var x = id.charAt(0); 
+        var y = id.charAt(1); 
+        console.log( currentGameTable[x][y] );
     }
 });
