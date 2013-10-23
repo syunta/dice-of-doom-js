@@ -1,6 +1,6 @@
 $(function(){
     
-    var TABLE_SIZE = 5;
+    var TABLE_SIZE = 30;
     var TURN = {
         'A':{next:'B'},
         'B':{next:'A'}
@@ -11,11 +11,8 @@ $(function(){
     startApp();
 
     function startApp(){
-        var gameTable = createGameTable();
-        console.log( JSON.stringify(gameTable,null,8) );
-        console.log( JSON.stringify(getLinkedHexes(gameTable,1,1),null,8) );
-//        currentGameTable = setInitialGameTable( createGameTable() );
-//        drawGameTable(currentGameTable);
+        currentGameTable = createGameTable();
+        drawGameTable(currentGameTable);
 //        console.log( JSON.stringify(makeGameTree(),null,8) );
 //        console.log( makeGameTree() );
     }
@@ -33,8 +30,8 @@ $(function(){
                     gameTable[x][y] = {};
                 }else{
                     gameTable[x][y] = {
-                        owner : x, // debbuging code
-                        dice  : y  // debbuging code
+                        owner : 'A',
+                        dice  : 0
                     };
                 }
             }
@@ -146,8 +143,7 @@ $(function(){
         }
     }
     
-    /* debugging code */
-    function turnEnd(){
+    function turnEnd(){ // debbuging code
         return {'turn':'end'};
     }
 
@@ -187,15 +183,15 @@ $(function(){
         var tableFrame = '';
         var space = '&nbsp;&nbsp;&nbsp;';
 
-        for(var i = 0; i < TABLE_ROW.length; i++){
-            for(var j = TABLE_COLUMN.length; i < j; j--){
+        for(var x = 1; x <= TABLE_SIZE; x++){
+            for(var y = TABLE_SIZE; x <= y; y--){
                 tableFrame += space;
             }
-            for(var j = 0; j < TABLE_COLUMN.length; j++ ){
+            for(var y = 1; y <= TABLE_SIZE; y++ ){
                 tableFrame += 
-                    '<span id = ' + TABLE_ROW[i] + TABLE_COLUMN[j] + '>' +
-                    gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].owner + ':' +
-                    gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].dice +
+                    '<span id = ' + x + y + '>' +
+                    gameTable[x][y].owner + ':' +
+                    gameTable[x][y].dice +
                     '</span>' + space;
             }
 
