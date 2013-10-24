@@ -13,6 +13,7 @@ $(function(){
     function startApp(){
         currentGameTable = setInitialGameTable( createGameTable() );
         drawGameTable(currentGameTable);
+        makeGameTree('A',currentGameTable,false,1);
         console.log( JSON.stringify(makeGameTree('A',currentGameTable,false,1),null,8) );
     }
 
@@ -104,7 +105,10 @@ $(function(){
                     nextPlayer : makePhase(nextPlayer(player),gameTable,forciblyPass(),depth)
                 };
             }else{
-                return gameOver();
+                return {
+                    action : player + ' has no action',
+                    result : gameOver()
+                };
             }
         }
     }
@@ -128,17 +132,14 @@ $(function(){
                     blockers[j].x + ':' + blockers[j].y
                 ] = makePhaseActions(
                     player,
-                    makeNextGameTable(player,gameTable,attackers[i],blockers[j]),
+                    makeAttackedGameTable(player,gameTable,attackers[i],blockers[j]),
                     wasPassed,
                     depth
                 );
             }
         }
         if( $.isEmptyObject(nextActions) ){
-            return {
-                action   : 'active pass',
-                nextPlayer : makePhase(nextPlayer(player),gameTable,wasPassed,depth)
-            };
+            return activePass(player,gameTable,wasPassed,depth);
         }else{
             return nextActions;
         }
@@ -185,6 +186,13 @@ $(function(){
         return blockers;
     }
 
+    function activePass(player,gameTable,wasPassed,depth){
+        return {
+            action     : 'active pass',
+            nextPlayer : makePhase(nextPlayer(player),gameTable,wasPassed,depth)
+        };
+    }
+
     function forciblyPass(){
         return true;
     }
@@ -197,7 +205,7 @@ $(function(){
         return {Game:'Over'};
     }
 
-    function makeNextGameTable(player,gameTable,attackingHex,attackedHex){
+    function makeAttackedGameTable(player,gameTable,attackingHex,attackedHex){
         var nextGameTable = $.extend(true,{},gameTable);
        
         nextGameTable[attackedHex.x][attackedHex.y].owner = player;
@@ -207,6 +215,10 @@ $(function(){
         nextGameTable[attackedHex.x][attackedHex.y].dice = dice - 1;
 
         return nextGameTable;
+    }
+
+    function makeSuppliedGameTable(){
+        //TODO
     }
 
     function nextPlayer(player){
