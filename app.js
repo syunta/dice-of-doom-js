@@ -93,11 +93,7 @@ $(function(){
         var canAction = checkAnyOfAction(player,gameTable);
             
         if(canAction){
-            return {
-                player            : player,
-                startingGameTable : gameTable,
-                actions           : listActions(player,gameTable,resetPass(),depth)
-            };
+            return makeActionsTree(player,gameTable,resetPass(),depth);
         }else{
             if(wasPassed == false){
                 return {
@@ -113,14 +109,23 @@ $(function(){
         }
     }
 
-    function makePhaseActions(player,gameTable,wasPassed,depth){
+    function makeActionsTree(player,gameTable,wasPassed,depth){
+        var removedDice = 0;
         return {
-            gameTable      : gameTable,
-            nextActions    : listActions(player,gameTable,wasPassed,depth)
+            player            : player,
+            startingGameTable : gameTable,
+            actions           : listActions(player,gameTable,removedDice,wasPassed,depth)
         };
     }
 
-    function listActions(player,gameTable,wasPassed,depth){
+    function makePhaseActions(player,gameTable,removedDice,wasPassed,depth){
+        return {
+            gameTable      : gameTable,
+            nextActions    : listActions(player,gameTable,removedDice,wasPassed,depth)
+        };
+    }
+
+    function listActions(player,gameTable,removedDice,wasPassed,depth){
         var nextActions = {};
         var attackers = listAttackers(player,gameTable);
 
@@ -133,6 +138,7 @@ $(function(){
                 ] = makePhaseActions(
                     player,
                     makeAttackedGameTable(player,gameTable,attackers[i],blockers[j]),
+                    removedDice,
                     wasPassed,
                     depth
                 );
@@ -143,6 +149,13 @@ $(function(){
         }else{
             return nextActions;
         }
+    }
+
+    function activePass(player,gameTable,wasPassed,depth){
+        return {
+            action     : 'active pass',
+            nextPlayer : makePhase(nextPlayer(player),gameTable,wasPassed,depth)
+        };
     }
 
     function checkAnyOfAction(player,gameTable){
@@ -184,13 +197,6 @@ $(function(){
             }
         }
         return blockers;
-    }
-
-    function activePass(player,gameTable,wasPassed,depth){
-        return {
-            action     : 'active pass',
-            nextPlayer : makePhase(nextPlayer(player),gameTable,wasPassed,depth)
-        };
     }
 
     function forciblyPass(){
