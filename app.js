@@ -89,13 +89,12 @@ $(function(){
     }
 
     function makePhase(player,gameTable,wasPassed,depth){
-        return listActions(player,gameTable,wasPassed,depth);
 //        if(0 < justAfterAction.length){
-//            return {
-//                player            : player,
-//                startingGameTable : gameTable,
-//                actions           : listActions(player,gameTable,resetPass(),depth)
-//            };
+            return {
+                player            : player,
+                startingGameTable : gameTable,
+                actions           : listActions(player,gameTable,resetPass(),depth)
+            };
 //        }else{
 //            if(wasPassed == false){
 //                return {
@@ -116,44 +115,36 @@ $(function(){
     }
 
     function listActions(player,gameTable,wasPassed,depth){
+        var nextActions = {};
         var attackers = listAttackers(player,gameTable);
-        var blockers = listBlockersAgainstOneAttacker(player,gameTable,attackers[1]);
-        return blockers;
-//        var nextActions = {};
-//        for(var i = 0; i < attacker.length; i++){
-//            var blocker = getLinkedHexes(gameTable,attacker[i].x,attacker[i].y);
-//            for(var j = 0; j < blocker.length; j++){
-//                if(blocker[j].owner != player){
-//                    if( blocker[j].dice < attacker[i].dice ){ //ver1 rule
-//                        attackerAndBlocker.push({
-//                            attacker : attacker[i],
-//                            blocker  : blocker[j]
-//                        });
-//                        nextActions[
-//                            attacker[i].x + ':' + attacker[i].y + '->' +
-//                            blocker[j].x + ':' + blocker[j].y
-//                        ] = makePhaseAction(
-//                            player,
-//                            makeNextGameTable(
-//                                player,
-//                                gameTable,
-//                                attacker[i],
-//                                blocker[j]
-//                            ),
-//                            depth
-//                        );
-//                    }
-//                }
-//            }
-//        }
-//        if( $.isEmptyObject(nextActions) ){
+
+        for(var i = 0; i < attackers.length; i++){
+            var blockers = listBlockersAgainstOneAttacker(player,gameTable,attackers[i]);
+            for(var j = 0; j < blockers.length; j++){
+                nextActions[
+                    attackers[i].x + ':' + attackers[i].y + '->' +
+                    blockers[j].x + ':' + blockers[j].y
+                ] = makePhaseAction(
+                    player,
+                    makeNextGameTable(
+                        player,
+                        gameTable,
+                        attackers[i],
+                        blockers[j]
+                    ),
+                    depth
+                );
+            }
+        }
+        if( $.isEmptyObject(nextActions) ){
+            return gameOver();
 //            return {
 //                action   : 'active pass',
 //                nextPlayer : makePhase(nextPlayer(player),gameTable,wasPassed,depth)
 //            };
-//        }else{
-//            return nextActions;
-//        }
+        }else{
+            return nextActions;
+        }
     }
     
     function listAttackers(player,gameTable){
@@ -212,22 +203,13 @@ $(function(){
     }
 
     function setInitialGameTable(gameTable){
-//        var players = ['A','B'];
-//        for(var x = 1; x <= TABLE_SIZE; x++){
-//            for(var y = 1; y <= TABLE_SIZE; y++){
-//                gameTable[x][y].owner = players[getRandom(0,1)];
-//                gameTable[x][y].dice = getRandom(1,3);
-//            }
-//        }
-        gameTable[1][1].owner = 'B';
-        gameTable[1][2].owner = 'B';
-        gameTable[2][1].owner = 'A';
-        gameTable[2][2].owner = 'A';
-        gameTable[1][1].dice = 1;
-        gameTable[1][2].dice = 1;
-        gameTable[2][1].dice = 2;
-        gameTable[2][2].dice = 2;
-
+        var players = ['A','B'];
+        for(var x = 1; x <= TABLE_SIZE; x++){
+            for(var y = 1; y <= TABLE_SIZE; y++){
+                gameTable[x][y].owner = players[getRandom(0,1)];
+                gameTable[x][y].dice = getRandom(1,3);
+            }
+        }
         return gameTable;
     }
 
