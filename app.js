@@ -109,7 +109,7 @@ $(function(){
         }
     }
 
-    function makePhaseAction(player,gameTable,wasPassed,depth){
+    function makePhaseActions(player,gameTable,wasPassed,depth){
         return {
             gameTable      : gameTable,
             nextActions    : listActions(player,gameTable,wasPassed,depth)
@@ -126,7 +126,7 @@ $(function(){
                 nextActions[
                     attackers[i].x + ':' + attackers[i].y + '->' +
                     blockers[j].x + ':' + blockers[j].y
-                ] = makePhaseAction(
+                ] = makePhaseActions(
                     player,
                     makeNextGameTable(player,gameTable,attackers[i],blockers[j]),
                     wasPassed,
@@ -135,11 +135,10 @@ $(function(){
             }
         }
         if( $.isEmptyObject(nextActions) ){
-            return gameOver();
-//            return {
-//                action   : 'active pass',
-//                nextPlayer : makePhase(nextPlayer(player),gameTable,wasPassed,depth)
-//            };
+            return {
+                action   : 'active pass',
+                nextPlayer : makePhase(nextPlayer(player),gameTable,wasPassed,depth)
+            };
         }else{
             return nextActions;
         }
