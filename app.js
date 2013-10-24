@@ -89,22 +89,24 @@ $(function(){
     }
 
     function makePhase(player,gameTable,wasPassed,depth){
-//        if(0 < justAfterAction.length){
+        var canAction = checkAnyOfAction(player,gameTable);
+            
+        if(canAction){
             return {
                 player            : player,
                 startingGameTable : gameTable,
                 actions           : listActions(player,gameTable,resetPass(),depth)
             };
-//        }else{
-//            if(wasPassed == false){
-//                return {
-//                    action     : player + ' is Passed.',
-//                    nextPlayer : makePhase(nextPlayer(player),gameTable,forciblyPass(),depth)
-//                };
-//            }else{
-//                return gameOver();
-//            }
-//        }
+        }else{
+            if(wasPassed == false){
+                return {
+                    action     : player + ' has no action',
+                    nextPlayer : makePhase(nextPlayer(player),gameTable,forciblyPass(),depth)
+                };
+            }else{
+                return gameOver();
+            }
+        }
     }
 
     function makePhaseAction(player,gameTable,wasPassed,depth){
@@ -126,12 +128,8 @@ $(function(){
                     blockers[j].x + ':' + blockers[j].y
                 ] = makePhaseAction(
                     player,
-                    makeNextGameTable(
-                        player,
-                        gameTable,
-                        attackers[i],
-                        blockers[j]
-                    ),
+                    makeNextGameTable(player,gameTable,attackers[i],blockers[j]),
+                    wasPassed,
                     depth
                 );
             }
@@ -145,6 +143,20 @@ $(function(){
         }else{
             return nextActions;
         }
+    }
+
+    function checkAnyOfAction(player,gameTable){
+        var canAction = false;
+        var attackers = listAttackers(player,gameTable);
+
+        for(var i = 0; i < attackers.length; i++){
+            var blockers = listBlockersAgainstOneAttacker(player,gameTable,attackers[i]);
+            for(var j = 0; j < blockers.length; j++){
+                canAction = true;
+                break;
+            }
+        }
+        return canAction;
     }
     
     function listAttackers(player,gameTable){
