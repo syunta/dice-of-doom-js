@@ -111,7 +111,7 @@ $(function(){
     }
 
     function makeActionsTree(player,gameTable,wasPassed,depth){
-        var removedDice = 1;
+        var removedDice = 0;
         return {
             player            : player,
             startingGameTable : gameTable,
@@ -139,7 +139,7 @@ $(function(){
                 ] = makePhaseActions(
                     player,
                     makeAttackedGameTable(player,gameTable,attackers[i],blockers[j]),
-                    removedDice,
+                    addRemovedDice(removedDice,blockers[j].dice),
                     wasPassed,
                     depth
                 );
@@ -159,12 +159,16 @@ $(function(){
         }
     }
 
+    function addRemovedDice(removedDice,addDice){
+        return removedDice + addDice;
+    }
+
     function activePass(player,gameTable,removedDice,wasPassed,depth){
         return {
             nextPlayer : makePhase(
                             nextPlayer(player),
-                            gameTable,
-//                            makeSuppliedGameTable(player,gameTable,removedDice),
+//                            gameTable,
+                            makeSuppliedGameTable(player,gameTable,removedDice),
                             wasPassed,
                             depth
                          )
@@ -238,11 +242,20 @@ $(function(){
 
     function makeSuppliedGameTable(player,gameTable,removedDice){
         var suppliedGameTable = $.extend(true,{},gameTable);
+        var totalSupplyDice = removedDice - 1;
+        var remainingDice = totalSupplyDice;
+        var supplyDice = 0;
         for(var y = 1; y <= TABLE_SIZE; y++){
             for(var x = 1; x <= TABLE_SIZE; x++){
-                if(suppliedGameTable[x][y].owner == player){
-                        suppliedGameTable[x][y].dice += 1;
+                if(suppliedGameTable[x][y].owner == player && suppliedGameTable[x][y].dice < DICE_NUMBERS_LIMIT_VALUE){
+                    supplyDice = DICE_NUMBERS_LIMIT_VALUE - suppliedGameTable[x][y].dice;
+                    if(remainingDice < supplyDice){
+                        supplyDice = remainingDice;
+                    }
+                    remainingDice -= supplyDice;
+                    suppliedGameTable[x][y].dice += supplyDice;
                 }
+                if(remainingDice == 0)break;
             }
         }
         return suppliedGameTable;
