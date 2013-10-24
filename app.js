@@ -5,6 +5,7 @@ $(function(){
         A:{next:'B'},
         B:{next:'A'}
     };
+    var DICE_NUMBERS_LIMIT_VALUE = 3;
 
     var currentGameTable = {};
 
@@ -110,7 +111,7 @@ $(function(){
     }
 
     function makeActionsTree(player,gameTable,wasPassed,depth){
-        var removedDice = 0;
+        var removedDice = 1;
         return {
             player            : player,
             startingGameTable : gameTable,
@@ -145,16 +146,28 @@ $(function(){
             }
         }
         if( $.isEmptyObject(nextActions) ){
-            return activePass(player,gameTable,wasPassed,depth);
+            nextActions['active pass'] = activePass(
+                player,
+                gameTable,
+                removedDice,
+                wasPassed,
+                depth
+            );
+            return nextActions;
         }else{
             return nextActions;
         }
     }
 
-    function activePass(player,gameTable,wasPassed,depth){
+    function activePass(player,gameTable,removedDice,wasPassed,depth){
         return {
-            action     : 'active pass',
-            nextPlayer : makePhase(nextPlayer(player),gameTable,wasPassed,depth)
+            nextPlayer : makePhase(
+                            nextPlayer(player),
+                            gameTable,
+//                            makeSuppliedGameTable(player,gameTable,removedDice),
+                            wasPassed,
+                            depth
+                         )
         };
     }
 
@@ -212,19 +225,27 @@ $(function(){
     }
 
     function makeAttackedGameTable(player,gameTable,attackingHex,attackedHex){
-        var nextGameTable = $.extend(true,{},gameTable);
+        var attackedGameTable = $.extend(true,{},gameTable);
        
-        nextGameTable[attackedHex.x][attackedHex.y].owner = player;
+        attackedGameTable[attackedHex.x][attackedHex.y].owner = player;
 
-        var dice = nextGameTable[attackingHex.x][attackingHex.y].dice;
-        nextGameTable[attackingHex.x][attackingHex.y].dice = 1;
-        nextGameTable[attackedHex.x][attackedHex.y].dice = dice - 1;
+        var dice = attackedGameTable[attackingHex.x][attackingHex.y].dice;
+        attackedGameTable[attackingHex.x][attackingHex.y].dice = 1;
+        attackedGameTable[attackedHex.x][attackedHex.y].dice = dice - 1;
 
-        return nextGameTable;
+        return attackedGameTable;
     }
 
-    function makeSuppliedGameTable(){
-        //TODO
+    function makeSuppliedGameTable(player,gameTable,removedDice){
+        var suppliedGameTable = $.extend(true,{},gameTable);
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
+                if(suppliedGameTable[x][y].owner == player){
+                        suppliedGameTable[x][y].dice += 1;
+                }
+            }
+        }
+        return suppliedGameTable;
     }
 
     function nextPlayer(player){
@@ -233,10 +254,10 @@ $(function(){
 
     function setInitialGameTable(gameTable){
         var players = ['A','B'];
-        for(var x = 1; x <= TABLE_SIZE; x++){
-            for(var y = 1; y <= TABLE_SIZE; y++){
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
                 gameTable[x][y].owner = players[getRandom(0,1)];
-                gameTable[x][y].dice = getRandom(1,3);
+                gameTable[x][y].dice = getRandom(1,DICE_NUMBERS_LIMIT_VALUE);
             }
         }
         return gameTable;
