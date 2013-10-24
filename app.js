@@ -97,7 +97,6 @@ $(function(){
             wasPassed,
             depth
         );
-        return justAfterAction;
 
 //        if(0 < justAfterAction.length){
 //            return {
@@ -125,7 +124,7 @@ $(function(){
     }
 
     function listActions(player,gameTable,wasPassed,depth){
-        return listAttackerAndBlocker(
+        var attackerAndBloccker = listAttackerAndBlocker(
             player,
             gameTable,
             listAttacker(player,gameTable),
@@ -134,8 +133,8 @@ $(function(){
         );
     }
     
-    function listAttacker(player,gameTable){
-        var attacker = [];
+    function listAttackers(player,gameTable){
+        var attackers = [];
         for(var y = 1; y <= TABLE_SIZE; y++){
             for(var x = 1; x <= TABLE_SIZE; x++){
                 if(gameTable[x][y].owner == player){
@@ -145,7 +144,7 @@ $(function(){
                 }
             }
         }
-        return attacker;
+        return attackers;
     }
 
     function listAttackerAndBlocker(player,gameTable,attacker,wasPassed,depth){
