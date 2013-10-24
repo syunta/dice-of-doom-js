@@ -89,15 +89,7 @@ $(function(){
     }
 
     function makePhase(player,gameTable,wasPassed,depth){
-
-        var justAfterAction = listAttackerAndBlocker(
-            player,
-            gameTable,
-            listAttacker(player,gameTable),
-            wasPassed,
-            depth
-        );
-
+        return listActions(player,gameTable,wasPassed,depth);
 //        if(0 < justAfterAction.length){
 //            return {
 //                player            : player,
@@ -124,41 +116,20 @@ $(function(){
     }
 
     function listActions(player,gameTable,wasPassed,depth){
-        var attackerAndBloccker = listAttackerAndBlocker(
-            player,
-            gameTable,
-            listAttacker(player,gameTable),
-            wasPassed,
-            depth
-        );
-    }
-    
-    function listAttackers(player,gameTable){
-        var attackers = [];
-        for(var y = 1; y <= TABLE_SIZE; y++){
-            for(var x = 1; x <= TABLE_SIZE; x++){
-                if(gameTable[x][y].owner == player){
-                    if(2 <= gameTable[x][y].dice){
-                        attacker.push(gameTable[x][y]);
-                    }
-                }
-            }
-        }
-        return attackers;
-    }
-
-    function listAttackerAndBlocker(player,gameTable,attacker,wasPassed,depth){
-        var attackerAndBlocker = [];
-        for(var i = 0; i < attacker.length; i++){
-            var blocker = getLinkedHexes(gameTable,attacker[i].x,attacker[i].y);
-            for(var j = 0; j < blocker.length; j++){
-                if(blocker[j].owner != player){
-                    if( blocker[j].dice < attacker[i].dice ){ //ver1 rule
-                        attackerAndBlocker.push({
-                            attacker : attacker[i],
-                            blocker  : blocker[j]
-                        });
-//                        attackerAndBlocker[
+        var attackers = listAttackers(player,gameTable);
+        var blockers = listBlockersAgainstOneAttacker(player,gameTable,attackers[1]);
+        return blockers;
+//        var nextActions = {};
+//        for(var i = 0; i < attacker.length; i++){
+//            var blocker = getLinkedHexes(gameTable,attacker[i].x,attacker[i].y);
+//            for(var j = 0; j < blocker.length; j++){
+//                if(blocker[j].owner != player){
+//                    if( blocker[j].dice < attacker[i].dice ){ //ver1 rule
+//                        attackerAndBlocker.push({
+//                            attacker : attacker[i],
+//                            blocker  : blocker[j]
+//                        });
+//                        nextActions[
 //                            attacker[i].x + ':' + attacker[i].y + '->' +
 //                            blocker[j].x + ':' + blocker[j].y
 //                        ] = makePhaseAction(
@@ -171,19 +142,45 @@ $(function(){
 //                            ),
 //                            depth
 //                        );
+//                    }
+//                }
+//            }
+//        }
+//        if( $.isEmptyObject(nextActions) ){
+//            return {
+//                action   : 'active pass',
+//                nextPlayer : makePhase(nextPlayer(player),gameTable,wasPassed,depth)
+//            };
+//        }else{
+//            return nextActions;
+//        }
+    }
+    
+    function listAttackers(player,gameTable){
+        var attackers = [];
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
+                if(gameTable[x][y].owner == player){
+                    if(2 <= gameTable[x][y].dice){
+                        attackers.push(gameTable[x][y]);
                     }
                 }
             }
         }
-        return attackerAndBlocker;
-//        if( $.isEmptyObject(attackerAndBlocker) ){
-//            return {
-//                action   : 'active pass',
-//                nextTurn : makePhase(nextPlayer(player),gameTable,wasPassed,depth)
-//            };
-//        }else{
-//            return attackerAndBlocker;
-//        }
+        return attackers;
+    }
+
+    function listBlockersAgainstOneAttacker(player,gameTable,attacker){
+        var blockers = [];
+        var possibleBlockers = getLinkedHexes(gameTable,attacker.x,attacker.y);
+        for(var i = 0; i < possibleBlockers.length; i++){
+            if(possibleBlockers[i].owner != player){
+                if( possibleBlockers[i].dice < attacker.dice ){ //ver1 rule
+                    blockers.push(possibleBlockers[i]);
+                }
+            }
+        }
+        return blockers;
     }
 
     function forciblyPass(){
