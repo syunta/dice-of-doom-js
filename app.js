@@ -5,7 +5,7 @@ $(function(){
         A:{next:'B'},
         B:{next:'A'}
     };
-    var DICE_NUMBERS_LIMIT_VALUE = 3;
+    var LIMIT_VALUE_DICE_NUMBERS= 3;
 
     var currentGameTable = {};
 
@@ -15,7 +15,7 @@ $(function(){
         currentGameTable = setInitialGameTable( createGameTable() );
         drawGameTable(currentGameTable);
         makeGameTree('A',currentGameTable,false,1);
-        console.log( JSON.stringify(makeGameTree('A',currentGameTable,false,1),null,8) );
+        console.log( JSON.stringify(makeGameTree('A',currentGameTable,false,1),null,4) );
     }
 
     /* Data Structure*/
@@ -104,7 +104,7 @@ $(function(){
             }else{
                 return {
                     action : player + ' has no action',
-                    result : gameOver()
+                    result : judgeVictoryAndDefeat()
                 };
             }
         }
@@ -159,15 +159,14 @@ $(function(){
         }
     }
 
-    function addRemovedDice(removedDice,addDice){
-        return removedDice + addDice;
+    function addRemovedDice(removedDice,additionalDice){
+        return removedDice + additionalDice;
     }
 
     function activePass(player,gameTable,removedDice,wasPassed,depth){
         return {
             nextPlayer : makePhase(
                             nextPlayer(player),
-//                            gameTable,
                             makeSuppliedGameTable(player,gameTable,removedDice),
                             wasPassed,
                             depth
@@ -224,8 +223,9 @@ $(function(){
         return false;
     }
     
-    function gameOver(){ // debbuging code
-        return {Game:'Over'};
+    function judgeVictoryAndDefeat(){
+        var result = {};
+        return result;
     }
 
     function makeAttackedGameTable(player,gameTable,attackingHex,attackedHex){
@@ -244,11 +244,10 @@ $(function(){
         var suppliedGameTable = $.extend(true,{},gameTable);
         var totalSupplyDice = removedDice - 1;
         var remainingDice = totalSupplyDice;
-        var supplyDice = 0;
+        var supplyDice = 1;
         for(var y = 1; y <= TABLE_SIZE; y++){
             for(var x = 1; x <= TABLE_SIZE; x++){
-                if(suppliedGameTable[x][y].owner == player && suppliedGameTable[x][y].dice < DICE_NUMBERS_LIMIT_VALUE){
-                    supplyDice = DICE_NUMBERS_LIMIT_VALUE - suppliedGameTable[x][y].dice;
+                if(suppliedGameTable[x][y].owner == player && suppliedGameTable[x][y].dice < LIMIT_VALUE_DICE_NUMBERS){
                     if(remainingDice < supplyDice){
                         supplyDice = remainingDice;
                     }
@@ -270,7 +269,7 @@ $(function(){
         for(var y = 1; y <= TABLE_SIZE; y++){
             for(var x = 1; x <= TABLE_SIZE; x++){
                 gameTable[x][y].owner = players[getRandom(0,1)];
-                gameTable[x][y].dice = getRandom(1,DICE_NUMBERS_LIMIT_VALUE);
+                gameTable[x][y].dice = getRandom(1,LIMIT_VALUE_DICE_NUMBERS);
             }
         }
         return gameTable;
