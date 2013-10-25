@@ -217,7 +217,7 @@ $(function(){
         if(canAction){
             return makeActionsTree(player,gameTable,resetPass(),depth);
         }else{
-            if(wasPassed == false){
+            if(!wasPassed){
                 return {
                     action     : player + ' has no action',
                     gameTable  : gameTable,
@@ -252,58 +252,70 @@ $(function(){
     }
 
     function listActions(player,gameTable,removedDice,canPass,wasPassed,depth){
-        var nextActions = {};
+        var actions = [];
         var attackers = listAttackers(player,gameTable);
 
         for(var i = 0; i < attackers.length; i++){
             var blockers = listBlockersAgainstOneAttacker(player,gameTable,attackers[i]);
             for(var j = 0; j < blockers.length; j++){
-                nextActions[
-                    attackers[i].x + ':' + attackers[i].y + '->' +
-                    blockers[j].x + ':' + blockers[j].y
-                ] = makePhaseActions(
-                    player,
-                    makeAttackedGameTable(player,gameTable,attackers[i],blockers[j]),
-                    addRemovedDice(removedDice,blockers[j].dice),
-                    enableToPass(),
-                    wasPassed,
-                    depth
-                );
+                actions.push({
+                    actType  : 'attack',
+                    attacker : {
+                        x : attackers[i].x,
+                        y : attackers[i].y
+                    },
+                    blocker  : {
+                        x : blockers[j].x,
+                        y : blockers[j].y
+                    },
+                    nextActions : makePhaseActions(
+                        player,
+                        makeAttackedGameTable(player,gameTable,attackers[i],blockers[j]),
+                        addRemovedDice(removedDice,blockers[j].dice),
+                        enableToPass(),
+                        wasPassed,
+                        depth
+                    )
+                });
             }
         }
 
-        if($.isEmptyObject(nextActions) ){
-            nextActions['end all possible'] = activePass(
-                player,
-                gameTable,
-                removedDice,
-                wasPassed,
-                depth
-            );
-            return nextActions;
+        if($.isEmptyObject(actions) ){
+            actions.push({
+                actType : 'end all possible',
+                next    :  activePass(
+                    player,
+                    gameTable,
+                    removedDice,
+                    wasPassed,
+                    depth
+                )
+            });
+            return actions;
         }else if(canPass){
-            nextActions['active pass'] = activePass(
-                player,
-                gameTable,
-                removedDice,
-                wasPassed,
-                depth
-            );
-            return nextActions;
+            actions.push({
+                actType : 'active pass',
+                next    :  activePass(
+                    player,
+                    gameTable,
+                    removedDice,
+                    wasPassed,
+                    depth
+                )
+            });
+            return actions;
         }else{
-            return nextActions;
+            return actions;
         }
     }
 
     function activePass(player,gameTable,removedDice,wasPassed,depth){
-        return {
-            next      : makePhase(
-                            nextPlayer(player),
-                            makeSuppliedGameTable(player,gameTable,removedDice),
-                            wasPassed,
-                            depth
-                        )
-        };
+        return makePhase(
+            nextPlayer(player),
+            makeSuppliedGameTable(player,gameTable,removedDice),
+            wasPassed,
+            depth
+        );
     }
 
     /* UI */
