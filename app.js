@@ -104,7 +104,7 @@ $(function(){
             }else{
                 return {
                     action : player + ' has no action',
-                    result : judgeVictoryAndDefeat()
+                    result : countDomain(gameTable)
                 };
             }
         }
@@ -223,8 +223,13 @@ $(function(){
         return false;
     }
     
-    function judgeVictoryAndDefeat(){
-        var result = {};
+    function countDomain(gameTable){
+        var result = {A:0,B:0};
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
+                result[gameTable[x][y].owner] += 1;
+            }
+        }
         return result;
     }
 
