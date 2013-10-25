@@ -14,8 +14,8 @@ $(function(){
     function startApp(){
         currentGameTable = setInitialGameTable( createGameTable() );
         drawGameTable(currentGameTable);
-        makeGameTree('A',currentGameTable,false,1);
-        console.log( JSON.stringify(makeGameTree('A',currentGameTable,false,1),null,4) );
+        makeGameTree('A',setInitialGameTable(createGameTable()));
+        console.log( JSON.stringify(makeGameTree('A',currentGameTable),null,4) );
     }
 
     /* Data Structure*/
@@ -205,7 +205,9 @@ $(function(){
     }
 
     /* Record of a game of go */
-    function makeGameTree(player,gameTable,wasPassed,depth){
+    function makeGameTree(player,gameTable){
+        var wasPassed = false;
+        var depth = 1;
         return makePhase(player,gameTable,wasPassed,depth);
     }
 
@@ -218,12 +220,14 @@ $(function(){
             if(wasPassed == false){
                 return {
                     action     : player + ' has no action',
-                    nextPlayer : makePhase(nextPlayer(player),gameTable,forciblyPass(),depth)
+                    gameTable  : gameTable,
+                    next       : makePhase(nextPlayer(player),gameTable,forciblyPass(),depth)
                 };
             }else{
                 return {
-                    action : player + ' has no action',
-                    result : countDomain(gameTable)
+                    action    : player + ' has no action',
+                    gameTable : gameTable,
+                    next      : countDomain(gameTable)
                 };
             }
         }
@@ -233,16 +237,17 @@ $(function(){
         var removedDice = 0;
         var canPass = false;
         return {
-            player            : player,
-            startingGameTable : gameTable,
-            actions           : listActions(player,gameTable,removedDice,canPass,wasPassed,depth)
+            player    : player,
+            gameTable : gameTable,
+            action    : listActions(player,gameTable,removedDice,canPass,wasPassed,depth)
         };
     }
 
     function makePhaseActions(player,gameTable,removedDice,canPass,wasPassed,depth){
         return {
-            gameTable      : gameTable,
-            nextActions    : listActions(player,gameTable,removedDice,canPass,wasPassed,depth)
+            player    : player,
+            gameTable : gameTable,
+            action    : listActions(player,gameTable,removedDice,canPass,wasPassed,depth)
         };
     }
 
@@ -292,12 +297,12 @@ $(function(){
 
     function activePass(player,gameTable,removedDice,wasPassed,depth){
         return {
-            nextPlayer : makePhase(
+            next      : makePhase(
                             nextPlayer(player),
                             makeSuppliedGameTable(player,gameTable,removedDice),
                             wasPassed,
                             depth
-                         )
+                        )
         };
     }
 
