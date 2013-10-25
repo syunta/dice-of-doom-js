@@ -7,15 +7,16 @@ $(function(){
     };
     var LIMIT_VALUE_DICE_NUMBERS= 3;
 
-    var currentGameTable = {};
+    var currentGameTree = {};
 
     startApp();
 
     function startApp(){
-        currentGameTable = setInitialGameTable( createGameTable() );
-        drawGameTable(currentGameTable);
-        makeGameTree('A',setInitialGameTable(createGameTable()));
-        console.log( JSON.stringify(makeGameTree('A',currentGameTable),null,4) );
+        gameTree = makeGameTree('A',setInitialGameTable(createGameTable()));
+        currentGameTree = gameTree;
+        drawGameTable(currentGameTree.gameTable);
+        clealyAttackers(currentGameTree.action);
+        console.log( JSON.stringify(gameTree,null,4) );
     }
 
     /* Data Structure*/
@@ -219,15 +220,15 @@ $(function(){
         }else{
             if(!wasPassed){
                 return {
-                    action     : player + ' has no action',
-                    gameTable  : gameTable,
-                    next       : makePhase(nextPlayer(player),gameTable,forciblyPass(),depth)
+                    action    : {actType : player + ' has no action'},
+                    gameTable : gameTable,
+                    next      : makePhase(nextPlayer(player),gameTable,forciblyPass(),depth)
                 };
             }else{
                 return {
-                    action    : player + ' has no action',
+                    action    : {actType : player + ' has no action'},
                     gameTable : gameTable,
-                    next      : countDomain(gameTable)
+                    next      : gameOver(gameTable)
                 };
             }
         }
@@ -268,12 +269,11 @@ $(function(){
                         x : blockers[j].x,
                         y : blockers[j].y
                     },
-                    nextActions : makePhaseActions(
+                    next  : makePhaseActions(
                         player,
                         makeAttackedGameTable(player,gameTable,attackers[i],blockers[j]),
                         addRemovedDice(removedDice,blockers[j].dice),
                         enableToPass(),
-                        wasPassed,
                         depth
                     )
                 });
@@ -318,6 +318,13 @@ $(function(){
         );
     }
 
+    function gameOver(gameTable){
+        return {
+            actType : 'game over',
+            result  : countDomain(gameTable)
+        };
+    }
+
     /* UI */
     function drawGameTable(gameTable){
         var tableFrame = '';
@@ -337,6 +344,16 @@ $(function(){
             tableFrame += '</br>';
         }
         $("body").html(tableFrame);
+    }
+    
+    function clealyAttackers(action){
+        for(var i = 0; i < action.length; i++){
+            if(action[i].actType == 'attack'){
+                $('#'+ action[i].attacker.x + action[i].attacker.y).css({
+                    'background-color' : 'yellow'
+                });
+            }
+        }
     }
 
     $("body").on('click','span',function(){
