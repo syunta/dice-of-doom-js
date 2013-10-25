@@ -86,6 +86,121 @@ $(function(){
     }
     
     /* Game Engine */
+    function setInitialGameTable(gameTable){
+        var players = ['A','B'];
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
+                gameTable[x][y].owner = players[getRandom(0,1)];
+                gameTable[x][y].dice = getRandom(1,LIMIT_VALUE_DICE_NUMBERS);
+            }
+        }
+        return gameTable;
+    }
+
+    function getRandom(min,max){
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function listAttackers(player,gameTable){
+        var attackers = [];
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
+                if(gameTable[x][y].owner == player){
+                    if(2 <= gameTable[x][y].dice){
+                        attackers.push(gameTable[x][y]);
+                    }
+                }
+            }
+        }
+        return attackers;
+    }
+
+    function listBlockersAgainstOneAttacker(player,gameTable,attacker){
+        var blockers = [];
+        var possibleBlockers = getLinkedHexes(gameTable,attacker.x,attacker.y);
+        for(var i = 0; i < possibleBlockers.length; i++){
+            if(possibleBlockers[i].owner != player){
+                if( possibleBlockers[i].dice < attacker.dice ){ //ver1 rule
+                    blockers.push(possibleBlockers[i]);
+                }
+            }
+        }
+        return blockers;
+    }
+
+    function makeAttackedGameTable(player,gameTable,attackingHex,attackedHex){
+        var attackedGameTable = $.extend(true,{},gameTable);
+       
+        attackedGameTable[attackedHex.x][attackedHex.y].owner = player;
+
+        var dice = attackedGameTable[attackingHex.x][attackingHex.y].dice;
+        attackedGameTable[attackingHex.x][attackingHex.y].dice = 1;
+        attackedGameTable[attackedHex.x][attackedHex.y].dice = dice - 1;
+
+        return attackedGameTable;
+    }
+
+    function makeSuppliedGameTable(player,gameTable,removedDice){
+        var suppliedGameTable = $.extend(true,{},gameTable);
+        var totalSupplyDice = removedDice - 1;
+        var remainingDice = totalSupplyDice;
+        var supplyDice = 1;
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
+                if(suppliedGameTable[x][y].owner == player && suppliedGameTable[x][y].dice < LIMIT_VALUE_DICE_NUMBERS){
+                    if(remainingDice < supplyDice){
+                        supplyDice = remainingDice;
+                    }
+                    remainingDice -= supplyDice;
+                    suppliedGameTable[x][y].dice += supplyDice;
+                }
+                if(remainingDice == 0)break;
+            }
+        }
+        return suppliedGameTable;
+    }
+
+    function nextPlayer(player){
+        return TURN[player].next;
+    }
+
+    function checkAnyOfAction(player,gameTable){
+        var canAction = false;
+        var attackers = listAttackers(player,gameTable);
+
+        for(var i = 0; i < attackers.length; i++){
+            var blockers = listBlockersAgainstOneAttacker(player,gameTable,attackers[i]);
+            for(var j = 0; j < blockers.length; j++){
+                canAction = true;
+                break;
+            }
+        }
+        return canAction;
+    }
+
+    function forciblyPass(){
+        return true;
+    }
+
+    function resetPass(){
+        return false;
+    }
+    
+    function countDomain(gameTable){
+        var result = {A:0,B:0};
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
+                result[gameTable[x][y].owner] += 1;
+            }
+        }
+        return result;
+    }
+
+    function addRemovedDice(removedDice,additionalDice){
+        return removedDice + additionalDice;
+    }
+
+    /* GameTree */
     function makeGameTree(player,gameTable,wasPassed,depth){
         return makePhase(player,gameTable,wasPassed,depth);
     }
@@ -159,10 +274,6 @@ $(function(){
         }
     }
 
-    function addRemovedDice(removedDice,additionalDice){
-        return removedDice + additionalDice;
-    }
-
     function activePass(player,gameTable,removedDice,wasPassed,depth){
         return {
             nextPlayer : makePhase(
@@ -172,116 +283,6 @@ $(function(){
                             depth
                          )
         };
-    }
-
-    function checkAnyOfAction(player,gameTable){
-        var canAction = false;
-        var attackers = listAttackers(player,gameTable);
-
-        for(var i = 0; i < attackers.length; i++){
-            var blockers = listBlockersAgainstOneAttacker(player,gameTable,attackers[i]);
-            for(var j = 0; j < blockers.length; j++){
-                canAction = true;
-                break;
-            }
-        }
-        return canAction;
-    }
-    
-    function listAttackers(player,gameTable){
-        var attackers = [];
-        for(var y = 1; y <= TABLE_SIZE; y++){
-            for(var x = 1; x <= TABLE_SIZE; x++){
-                if(gameTable[x][y].owner == player){
-                    if(2 <= gameTable[x][y].dice){
-                        attackers.push(gameTable[x][y]);
-                    }
-                }
-            }
-        }
-        return attackers;
-    }
-
-    function listBlockersAgainstOneAttacker(player,gameTable,attacker){
-        var blockers = [];
-        var possibleBlockers = getLinkedHexes(gameTable,attacker.x,attacker.y);
-        for(var i = 0; i < possibleBlockers.length; i++){
-            if(possibleBlockers[i].owner != player){
-                if( possibleBlockers[i].dice < attacker.dice ){ //ver1 rule
-                    blockers.push(possibleBlockers[i]);
-                }
-            }
-        }
-        return blockers;
-    }
-
-    function forciblyPass(){
-        return true;
-    }
-
-    function resetPass(){
-        return false;
-    }
-    
-    function countDomain(gameTable){
-        var result = {A:0,B:0};
-        for(var y = 1; y <= TABLE_SIZE; y++){
-            for(var x = 1; x <= TABLE_SIZE; x++){
-                result[gameTable[x][y].owner] += 1;
-            }
-        }
-        return result;
-    }
-
-    function makeAttackedGameTable(player,gameTable,attackingHex,attackedHex){
-        var attackedGameTable = $.extend(true,{},gameTable);
-       
-        attackedGameTable[attackedHex.x][attackedHex.y].owner = player;
-
-        var dice = attackedGameTable[attackingHex.x][attackingHex.y].dice;
-        attackedGameTable[attackingHex.x][attackingHex.y].dice = 1;
-        attackedGameTable[attackedHex.x][attackedHex.y].dice = dice - 1;
-
-        return attackedGameTable;
-    }
-
-    function makeSuppliedGameTable(player,gameTable,removedDice){
-        var suppliedGameTable = $.extend(true,{},gameTable);
-        var totalSupplyDice = removedDice - 1;
-        var remainingDice = totalSupplyDice;
-        var supplyDice = 1;
-        for(var y = 1; y <= TABLE_SIZE; y++){
-            for(var x = 1; x <= TABLE_SIZE; x++){
-                if(suppliedGameTable[x][y].owner == player && suppliedGameTable[x][y].dice < LIMIT_VALUE_DICE_NUMBERS){
-                    if(remainingDice < supplyDice){
-                        supplyDice = remainingDice;
-                    }
-                    remainingDice -= supplyDice;
-                    suppliedGameTable[x][y].dice += supplyDice;
-                }
-                if(remainingDice == 0)break;
-            }
-        }
-        return suppliedGameTable;
-    }
-
-    function nextPlayer(player){
-        return TURN[player].next;
-    }
-
-    function setInitialGameTable(gameTable){
-        var players = ['A','B'];
-        for(var y = 1; y <= TABLE_SIZE; y++){
-            for(var x = 1; x <= TABLE_SIZE; x++){
-                gameTable[x][y].owner = players[getRandom(0,1)];
-                gameTable[x][y].dice = getRandom(1,LIMIT_VALUE_DICE_NUMBERS);
-            }
-        }
-        return gameTable;
-    }
-
-    function getRandom(min,max){
-        return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
     /* UI */
