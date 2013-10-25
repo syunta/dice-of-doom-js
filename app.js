@@ -15,7 +15,7 @@ $(function(){
         gameTree = makeGameTree('A',setInitialGameTable(createGameTable()));
         currentGameTree = gameTree;
         drawGameTable(currentGameTree.gameTable);
-//        attack(currentGameTree.action);
+        attack(currentGameTree.action);
         console.log( JSON.stringify(gameTree,null,4) );
     }
 
@@ -260,9 +260,10 @@ $(function(){
 
         for(var i = 0; i < attackers.length; i++){
             actions.push({
-                x : attackers[i].x,
-                y : attackers[i].y,
-                next  : listBlockerSelections(
+                actType : 'attack',
+                x       : attackers[i].x,
+                y       : attackers[i].y,
+                next    : listBlockerSelections(
                     player,
                     gameTable,
                     removedDice,
@@ -307,9 +308,10 @@ $(function(){
         var blockers = listBlockersAgainstOneAttacker(player,gameTable,attacker);
         for(var i = 0; i < blockers.length; i++){
             actions.push({
-                x : blockers[i].x,
-                y : blockers[i].y,
-                next  : makePhaseActions(
+                actType : 'block',
+                x       : blockers[i].x,
+                y       : blockers[i].y,
+                next    : makePhaseActions(
                     player,
                     makeAttackedGameTable(player,gameTable,attacker,blockers[i]),
                     addRemovedDice(removedDice,blockers[i].dice),
@@ -358,34 +360,47 @@ $(function(){
         $("body").html(tableFrame);
     }
 
-//    function attack(action){
-//        for(var i = 0; i < action.length; i++){
-//            if(action[i].actType == 'attack'){
-//                clealyAttacker(action[i].attacker.x,action[i].attacker.y);
-//                enableToSelectAttack(action,action[i].attacker);
-//            }
-//        }
-//    }
-//
-//    function enableToSelectAttack(action,attacker){
-//        $('#'+ attacker.x + attacker.y).on('click',function(){
-//            for(var i = 0; i < action.length; i++){
-//                if(action[i].attacker.x == attacker.x && action[i].attacker.y == attacker.y){
-//                    clealyBlocker(action[i].blocker.x,action[i].blocker.y);
-//                }
-//            }
-//        });
-//    }
-//
-//    function clealyAttacker(x,y){
-//        $('#'+ x + y).css({
-//            'background-color' : 'yellow'
-//        });
-//    }
-//
-//    function clealyBlocker(x,y){
-//        $('#'+ x + y).css({
-//            'background-color' : 'red'
-//        });
-//    }
+    function attack(action){
+        for(var i = 0; i < action.length; i++){
+            if(action[i].actType == 'attack'){
+                clealyAttacker(action[i].x,action[i].y);
+                enableToSelectAttacker(action[i].x,action[i].y,action[i].next);
+            }
+        }
+    }
+
+    function enableToSelectAttacker(x,y,blockers){
+        var isAttacking = false;
+        $('#'+ x + y).on('click',function(){
+            if(!isAttacking){
+                for(var i = 0; i < blockers.length; i++){
+                    clealyBlocker(blockers[i].x,blockers[i].y);
+                }
+                isAttacking = true;
+            }else{
+                cancelAttack(blockers);
+                isAttacking = false;
+            }
+        });
+    }
+
+    function clealyAttacker(x,y){
+        $('#'+ x + y).css({
+            'background-color' : 'yellow'
+        });
+    }
+
+    function clealyBlocker(x,y){
+        $('#'+ x + y).css({
+            'background-color' : 'red'
+        });
+    }
+
+    function cancelAttack(blockers){
+        for(var i = 0; i < blockers.length; i++){
+            $('#'+ blockers[i].x + blockers[i].y).css({
+                'background-color' : 'white'
+            });
+        }
+    }
 });
