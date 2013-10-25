@@ -185,6 +185,10 @@ $(function(){
     function resetPass(){
         return false;
     }
+
+    function enableToPass(){
+        return true;
+    }
     
     function countDomain(gameTable){
         var result = {A:0,B:0};
@@ -200,7 +204,7 @@ $(function(){
         return removedDice + additionalDice;
     }
 
-    /* GameTree */
+    /* Record of a game of go */
     function makeGameTree(player,gameTable,wasPassed,depth){
         return makePhase(player,gameTable,wasPassed,depth);
     }
@@ -227,21 +231,22 @@ $(function(){
 
     function makeActionsTree(player,gameTable,wasPassed,depth){
         var removedDice = 0;
+        var canPass = false;
         return {
             player            : player,
             startingGameTable : gameTable,
-            actions           : listActions(player,gameTable,removedDice,wasPassed,depth)
+            actions           : listActions(player,gameTable,removedDice,canPass,wasPassed,depth)
         };
     }
 
-    function makePhaseActions(player,gameTable,removedDice,wasPassed,depth){
+    function makePhaseActions(player,gameTable,removedDice,canPass,wasPassed,depth){
         return {
             gameTable      : gameTable,
-            nextActions    : listActions(player,gameTable,removedDice,wasPassed,depth)
+            nextActions    : listActions(player,gameTable,removedDice,canPass,wasPassed,depth)
         };
     }
 
-    function listActions(player,gameTable,removedDice,wasPassed,depth){
+    function listActions(player,gameTable,removedDice,canPass,wasPassed,depth){
         var nextActions = {};
         var attackers = listAttackers(player,gameTable);
 
@@ -255,12 +260,23 @@ $(function(){
                     player,
                     makeAttackedGameTable(player,gameTable,attackers[i],blockers[j]),
                     addRemovedDice(removedDice,blockers[j].dice),
+                    enableToPass(),
                     wasPassed,
                     depth
                 );
             }
         }
-        if( $.isEmptyObject(nextActions) ){
+
+        if($.isEmptyObject(nextActions) ){
+            nextActions['end all possible'] = activePass(
+                player,
+                gameTable,
+                removedDice,
+                wasPassed,
+                depth
+            );
+            return nextActions;
+        }else if(canPass){
             nextActions['active pass'] = activePass(
                 player,
                 gameTable,
