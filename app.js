@@ -14,9 +14,8 @@ $(function(){
 
     function startApp(){
         currentGameTree = makeGameTree('A',setInitialGameTable(createGameTable()));
-        drawGameTable(currentGameTree.gameTable);
-        clealyAttacker(currentGameTree.action);
-        console.log( JSON.stringify(currentGameTree,null,4) );
+
+        nextGameSituation(currentGameTree);
     }
 
     /* Data Structure*/
@@ -222,15 +221,18 @@ $(function(){
         }else{
             if(!wasPassed){
                 return {
-                    action    : {actType : player + ' has no action'},
+                    player    : player,
                     gameTable : gameTable,
-                    next      : makePhase(nextPlayer(player),gameTable,forciblyPass(),depth)
+                    action    : [{
+                        actType : 'no action',
+                        next    : makePhase(nextPlayer(player),gameTable,forciblyPass(),depth)
+                    }]
                 };
             }else{
                 return {
-                    action    : {actType : player + ' has no action'},
+                    player    : player,
                     gameTable : gameTable,
-                    next      : gameOver(gameTable)
+                    action    : [gameOver(gameTable)],
                 };
             }
         }
@@ -260,6 +262,7 @@ $(function(){
 
         for(var i = 0; i < attackers.length; i++){
             actions.push({
+                player  : player,
                 actType : 'attack',
                 x       : attackers[i].x,
                 y       : attackers[i].y,
@@ -276,7 +279,7 @@ $(function(){
 
         if(actions.length == 0){
             actions.push({
-                actType : 'end all possible',
+                actType : 'pass',
                 next    :  activePass(
                     player,
                     gameTable,
@@ -288,7 +291,7 @@ $(function(){
             return actions;
         }else if(canPass){
             actions.push({
-                actType : 'active pass',
+                actType : 'pass',
                 next    :  activePass(
                     player,
                     gameTable,
@@ -340,7 +343,7 @@ $(function(){
     }
 
     /* UI */
-    function drawGameTable(gameTable){
+    function drawGameTable(gameTable,player){
         var tableFrame = '';
         var space = '&nbsp;&nbsp;&nbsp;';
 
@@ -357,7 +360,8 @@ $(function(){
             }
             tableFrame += '</br>';
         }
-        $(".gameTable").html(tableFrame);
+        $("#gameTable").html(tableFrame);
+        $("#player").text(player);
     }
 
     function clealyAttacker(action){
@@ -369,7 +373,7 @@ $(function(){
     }
 
     var isAttacking = false;
-    $('.gameTable').on('click','.isAttacking',function (){
+    $('#gameTable').on('click','.isAttacking',function (){
         var id = $(this).attr('id');
         var x = id.charAt(0);
         var y = id.charAt(1);
@@ -384,7 +388,7 @@ $(function(){
         }
         isAttacking = false;
     });
-    $('.gameTable').on('click','.possibleAttack',function(){
+    $('#gameTable').on('click','.possibleAttack',function(){
         var id = $(this).attr('id');
         var x = id.charAt(0);
         var y = id.charAt(1);
@@ -402,7 +406,7 @@ $(function(){
             }
         }
     });
-    $('.gameTable').on('click','.possibleBlock',function(){
+    $('#gameTable').on('click','.possibleBlock',function(){
         var id = $(this).attr('id');
         var x = id.charAt(0);
         var y = id.charAt(1);
@@ -416,9 +420,25 @@ $(function(){
         nextGameSituation(currentGameTree);
     });
 
+    $('#pass').on('click',function(){
+        var lastIndex = currentGameTree.action.length-1;
+        if(currentGameTree.action[lastIndex].actType == 'game over'){
+            $('#message').fadeIn();
+            $('#message').text('A:'+currentGameTree.action[lastIndex].result.A+'\nB:'+currentGameTree.action[lastIndex].result.B);
+        }else if(currentGameTree.action[lastIndex].actType == 'pass' || currentGameTree.action[lastIndex].actType == 'no action'){
+            currentGameTree = currentGameTree.action[lastIndex].next;
+            isAttacking = false;
+            nextGameSituation(currentGameTree);
+        }else{
+            $('#message').fadeIn();
+            $('#message').text('it is impossible.');
+            $('#message').fadeOut();
+        }
+    });
+
     function nextGameSituation(gameTree){
         resetClass();
-        drawGameTable(gameTree.gameTable);
+        drawGameTable(gameTree.gameTable,gameTree.player);
         clealyAttacker(gameTree.action);
     }
 
