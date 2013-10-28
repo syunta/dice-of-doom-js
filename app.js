@@ -1,151 +1,97 @@
 $(function(){
     
-    var TABLE_ROW = ['A','B'];
-    var TABLE_COLUMN = [1,2];
+    var TABLE_SIZE = 2;
     var TURN = {
-        'A':{next:'B'},
-        'B':{next:'A'}
+        A:{next:'B'},
+        B:{next:'A'}
     };
+    var LIMIT_VALUE_DICE_NUMBERS= 3;
 
-    var currentGameTable = {};
+    var currentGameTree = {};
+    var attackingGameTree = {};
 
     startApp();
 
     function startApp(){
-        currentGameTable = setInitialGameTable( createGameTable() );
-        drawGameTable(currentGameTable);
-        console.log( JSON.stringify(makeGameTree(),null,8) );
-//        console.log( makeGameTree() );
+        currentGameTree = makeGameTree('A',setInitialGameTable(createGameTable()));
+
+        nextGameSituation(currentGameTree);
     }
 
+    /* Data Structure*/
     function createGameTable(){
-        var gameTable = {
-            'A1':{
-                owner:null,
-                dice:0,
-                link:['A2','B1','B2']
-            },
-            'A2':{
-                owner:null,
-                dice:0,
-                link:['A1','B2']
-            },
-            'B1':{
-                owner:null,
-                dice:0,
-                link:['A1','B2']
-            },
-            'B2':{
-                owner:null,
-                dice:0,
-                link:['A1','A2','B1']
+        var gameTable = [];
+        for(var x = 0; x <= TABLE_SIZE+1; x++){
+            gameTable[x] = [];
+        }
+        for(var y = 0; y <= TABLE_SIZE+1; y++){
+            for(var x = 0; x <= TABLE_SIZE+1; x++){
+                if(y == 0 || x == 0){
+                    gameTable[x][y] = {};
+                }else if(y == TABLE_SIZE+1 || x == TABLE_SIZE+1){
+                    gameTable[x][y] = {};
+                }else{
+                    gameTable[x][y] = {
+                        x     : x,
+                        y     : y,
+                        owner : null,
+                        dice  : 0
+                    };
+                }
             }
-        }; 
-
+        }
         return gameTable;
     }
-
-    function makeGameTree(){
-        var player = 'A';
-//      var wasPassed = false;
-        var depth = 1; // debugging code
-
-        return makePhase(player,currentGameTable,depth);
-    }
-
-    function makePhase(player,gameTable,depth){
-        return {
-            player            : player,
-            startingGameTable : gameTable,
-            actions           : listActions(player,gameTable,depth)
-        };
-    }
-
-    function makePhaseAction(player,gameTable,depth){
-        return {
-            gameTable      : gameTable,
-            nextActions    : listActions(player,gameTable,depth)
-        };
-    }
-
-    function listActions(player,gameTable,depth){
-        return listAttackedEnemyHexes(
-            player,
-            gameTable,listAttackingHexes(player,gameTable),
-            depth
-        );
+    
+    function getLinkedHexes(gameTable,x,y){
+        var linkedHexes 
+            = getUpwardHexes(gameTable,x,y).concat(
+                getHorizontalHexes(gameTable,x,y),
+                getDownwardHexes(gameTable,x,y)
+              );
+        return linkedHexes;
     }
     
-    function listAttackingHexes(player,gameTable){
-        var attackingHexes = [];
-        for(var i = 0; i < TABLE_ROW.length; i++){
-            for(var j = 0; j < TABLE_COLUMN.length; j++){
-                if(gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].owner == player){
-                    if(2 <= gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].dice){
-                        attackingHexes.push(TABLE_ROW[i]+TABLE_COLUMN[j]);
-                    }
-                }
-            }
+    function getUpwardHexes(gameTable,x,y){
+        var upwardHexes = [];
+        if(!$.isEmptyObject(gameTable[x+1][y+1])){
+            upwardHexes.push(gameTable[x+1][y+1]);
         }
-        return attackingHexes;
+        if(!$.isEmptyObject(gameTable[x][y+1])){
+            upwardHexes.push(gameTable[x][y+1]);
+        }
+        return upwardHexes;
     }
 
-    function listAttackedEnemyHexes(player,gameTable,attackingHexes,depth){
-        var attackedEnemyHexes = {};
-        for(var i = 0; i < attackingHexes.length; i++){
-            var linkedHexes = gameTable[ attackingHexes[i] ].link;
-            for(var j = 0; j < linkedHexes.length; j++){
-                if(gameTable[ linkedHexes[j] ].owner != player){
-                    if(gameTable[ linkedHexes[j] ].dice < gameTable[ attackingHexes[i] ].dice){ //ver1 rule
-                        attackedEnemyHexes[ attackingHexes[i] + '->' +linkedHexes[j] ] = makePhaseAction(
-                            player,
-                            makeNextGameTable(
-                                player,
-                                gameTable,
-                                attackingHexes[i],
-                                linkedHexes[j]
-                            ),
-                            depth
-                        );
-                    }
-                }
-            }
+    function getHorizontalHexes(gameTable,x,y){
+        var horizontalHexes = [];
+        if(!$.isEmptyObject(gameTable[x-1][y])){
+            horizontalHexes.push(gameTable[x-1][y]);
         }
-        if( $.isEmptyObject(attackedEnemyHexes) ){
-            // call method,makePhase()
-            return turnEnd();
-        }else{
-            return attackedEnemyHexes;
+        if(!$.isEmptyObject(gameTable[x+1][y])){
+            horizontalHexes.push(gameTable[x+1][y]);
         }
+        return horizontalHexes;
+    }
+
+    function getDownwardHexes(gameTable,x,y){
+        var downwardHexes =[];
+        if(!$.isEmptyObject(gameTable[x][y-1])){
+            downwardHexes.push(gameTable[x][y-1]);
+        }
+        if(!$.isEmptyObject(gameTable[x-1][y-1])){
+            downwardHexes.push(gameTable[x-1][y-1]);
+        }
+        return downwardHexes;
     }
     
-    /* debugging code */
-    function turnEnd(){
-        return {'turn':'end'};
-    }
-
-    function makeNextGameTable(player,gameTable,attackingHex,attackedHex){
-        var nextGameTable = $.extend(true,{},gameTable);
-       
-        nextGameTable[attackedHex].owner = player;
-
-        var dice = nextGameTable[attackingHex].dice;
-        nextGameTable[attackingHex].dice = 1;
-        nextGameTable[attackedHex].dice = dice - 1;
-
-        return nextGameTable;
-    }
-
-    function nextPlayer(player){
-        return TURN[player].next;
-    }
-
+    /* Game Engine */
     function setInitialGameTable(gameTable){
         var players = ['A','B'];
-        for(var i = 0; i < TABLE_ROW.length; i++){
-            for(var j = 0; j < TABLE_COLUMN.length; j++){
-                gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].owner = players[getRandom(0,1)];
-                gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].dice = getRandom(1,3);
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
+                gameTable[x][y].owner = players[getRandom(0,1)];
+                gameTable[x][y].dice = getRandom(1,LIMIT_VALUE_DICE_NUMBERS);
             }
         }
         return gameTable;
@@ -155,33 +101,352 @@ $(function(){
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
+    function listAttackers(player,gameTable){
+        var attackers = [];
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
+                if(gameTable[x][y].owner == player){
+                    if(2 <= gameTable[x][y].dice){
+                        if(listBlockersAgainstOneAttacker(player,gameTable,gameTable[x][y]).length != 0){ //ver1 rule
+                            attackers.push(gameTable[x][y]);
+                        }
+                    }
+                }
+            }
+        }
+        return attackers;
+    }
+
+    function listBlockersAgainstOneAttacker(player,gameTable,attacker){
+        var blockers = [];
+        var possibleBlockers = getLinkedHexes(gameTable,attacker.x,attacker.y);
+        for(var i = 0; i < possibleBlockers.length; i++){
+            if(possibleBlockers[i].owner != player){
+                if( possibleBlockers[i].dice < attacker.dice ){ //ver1 rule
+                    blockers.push(possibleBlockers[i]);
+                }
+            }
+        }
+        return blockers;
+    }
+
+    function makeAttackedGameTable(player,gameTable,attackingHex,attackedHex){
+        var attackedGameTable = $.extend(true,{},gameTable);
+       
+        attackedGameTable[attackedHex.x][attackedHex.y].owner = player;
+
+        var dice = attackedGameTable[attackingHex.x][attackingHex.y].dice;
+        attackedGameTable[attackingHex.x][attackingHex.y].dice = 1;
+        attackedGameTable[attackedHex.x][attackedHex.y].dice = dice - 1;
+
+        return attackedGameTable;
+    }
+
+    function makeSuppliedGameTable(player,gameTable,removedDice){
+        var suppliedGameTable = $.extend(true,{},gameTable);
+        var totalSupplyDice = removedDice - 1;
+        var remainingDice = totalSupplyDice;
+        var supplyDice = 1;
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
+                if(suppliedGameTable[x][y].owner == player && suppliedGameTable[x][y].dice < LIMIT_VALUE_DICE_NUMBERS){
+                    if(remainingDice < supplyDice){
+                        supplyDice = remainingDice;
+                    }
+                    remainingDice -= supplyDice;
+                    suppliedGameTable[x][y].dice += supplyDice;
+                }
+                if(remainingDice == 0)break;
+            }
+        }
+        return suppliedGameTable;
+    }
+
+    function nextPlayer(player){
+        return TURN[player].next;
+    }
+
+    function checkAnyOfAction(player,gameTable){
+        var canAction = false;
+        var attackers = listAttackers(player,gameTable);
+
+        for(var i = 0; i < attackers.length; i++){
+            var blockers = listBlockersAgainstOneAttacker(player,gameTable,attackers[i]);
+            for(var j = 0; j < blockers.length; j++){
+                canAction = true;
+                break;
+            }
+        }
+        return canAction;
+    }
+
+    function forciblyPass(){
+        return true;
+    }
+
+    function resetPass(){
+        return false;
+    }
+
+    function enableToPass(){
+        return true;
+    }
+    
+    function countDomain(gameTable){
+        var result = {A:0,B:0};
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
+                result[gameTable[x][y].owner] += 1;
+            }
+        }
+        return result;
+    }
+
+    function addRemovedDice(removedDice,additionalDice){
+        return removedDice + additionalDice;
+    }
+
+    /* Record of a game of go */
+    function makeGameTree(player,gameTable){
+        var wasPassed = false;
+        var depth = 1;
+        return makePhase(player,gameTable,wasPassed,depth);
+    }
+
+    function makePhase(player,gameTable,wasPassed,depth){
+        var canAction = checkAnyOfAction(player,gameTable);
+            
+        if(canAction){
+            return makeActionsTree(player,gameTable,resetPass(),depth);
+        }else{
+            if(!wasPassed){
+                return {
+                    player    : player,
+                    gameTable : gameTable,
+                    action    : [{
+                        actType : 'no action',
+                        next    : makePhase(nextPlayer(player),gameTable,forciblyPass(),depth)
+                    }]
+                };
+            }else{
+                return {
+                    player    : player,
+                    gameTable : gameTable,
+                    action    : [gameOver(gameTable)],
+                };
+            }
+        }
+    }
+
+    function makeActionsTree(player,gameTable,wasPassed,depth){
+        var removedDice = 0;
+        var canPass = false;
+        return {
+            player    : player,
+            gameTable : gameTable,
+            action    : listActions(player,gameTable,removedDice,canPass,wasPassed,depth)
+        };
+    }
+
+    function makePhaseActions(player,gameTable,removedDice,canPass,wasPassed,depth){
+        return {
+            player    : player,
+            gameTable : gameTable,
+            action    : listActions(player,gameTable,removedDice,canPass,wasPassed,depth)
+        };
+    }
+
+    function listActions(player,gameTable,removedDice,canPass,wasPassed,depth){
+        var actions = [];
+        var attackers = listAttackers(player,gameTable);
+
+        for(var i = 0; i < attackers.length; i++){
+            actions.push({
+                player  : player,
+                actType : 'attack',
+                x       : attackers[i].x,
+                y       : attackers[i].y,
+                next    : listBlockerSelections(
+                    player,
+                    gameTable,
+                    removedDice,
+                    attackers[i],
+                    enableToPass(),
+                    depth
+                )
+            });
+        }
+
+        if(actions.length == 0){
+            actions.push({
+                actType : 'pass',
+                next    :  activePass(
+                    player,
+                    gameTable,
+                    removedDice,
+                    wasPassed,
+                    depth
+                )
+            });
+            return actions;
+        }else if(canPass){
+            actions.push({
+                actType : 'pass',
+                next    :  activePass(
+                    player,
+                    gameTable,
+                    removedDice,
+                    wasPassed,
+                    depth
+                )
+            });
+            return actions;
+        }else{
+            return actions;
+        }
+    }
+    
+    function listBlockerSelections(player,gameTable,removedDice,attacker,canPass,wasPassed,depth){
+        var actions = [];
+        var blockers = listBlockersAgainstOneAttacker(player,gameTable,attacker);
+        for(var i = 0; i < blockers.length; i++){
+            actions.push({
+                actType : 'block',
+                x       : blockers[i].x,
+                y       : blockers[i].y,
+                next    : makePhaseActions(
+                    player,
+                    makeAttackedGameTable(player,gameTable,attacker,blockers[i]),
+                    addRemovedDice(removedDice,blockers[i].dice),
+                    enableToPass(),
+                    depth
+                )
+            });
+        }
+        return actions;
+    }
+
+    function activePass(player,gameTable,removedDice,wasPassed,depth){
+        return makePhase(
+            nextPlayer(player),
+            makeSuppliedGameTable(player,gameTable,removedDice),
+            wasPassed,
+            depth
+        );
+    }
+
+    function gameOver(gameTable){
+        return {
+            actType : 'game over',
+            result  : countDomain(gameTable)
+        };
+    }
+
     /* UI */
-    function drawGameTable(gameTable){
+    function drawGameTable(gameTable,player){
         var tableFrame = '';
         var space = '&nbsp;&nbsp;&nbsp;';
 
-        for(var i = 0; i < TABLE_ROW.length; i++){
-            for(var j = TABLE_COLUMN.length; i < j; j--){
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = TABLE_SIZE; y <= x; x--){
                 tableFrame += space;
             }
-            for(var j = 0; j < TABLE_COLUMN.length; j++ ){
+            for(var x = 1; x <= TABLE_SIZE; x++ ){
                 tableFrame += 
-                    '<span id = ' + TABLE_ROW[i] + TABLE_COLUMN[j] + '>' +
-                    gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].owner + ':' +
-                    gameTable[ TABLE_ROW[i]+TABLE_COLUMN[j] ].dice +
+                    '<span id = ' + x + y + '>' +
+                    gameTable[x][y].owner + ':' +
+                    gameTable[x][y].dice +
                     '</span>' + space;
             }
-
             tableFrame += '</br>';
         }
-        $("body").html(tableFrame);
+        $("#gameTable").html(tableFrame);
+        $("#player").text('player : ' + player);
     }
 
-    $("body").on('click','span',function(){
-        getStatus( $(this).attr('id') );
+    function clealyAttacker(action){
+        for(var i = 0; i < action.length; i++){
+            if(action[i].actType == 'attack'){
+                $('#' + action[i].x + action[i].y).addClass('possibleAttack');
+            }
+        }
+    }
+
+    var isAttacking = false;
+    $('#gameTable').on('click','.isAttacking',function (){
+        var id = $(this).attr('id');
+        var x = id.charAt(0);
+        var y = id.charAt(1);
+        $('#' + x + y).addClass('possibleAttack');
+        $('#' + x + y).removeClass('isAttacking');
+        for(var i = 0; i < currentGameTree.action.length; i++){
+            if(currentGameTree.action[i].x == x && currentGameTree.action[i].y == y){
+                for(var j = 0; j < currentGameTree.action[i].next.length; j++){
+                    $('#' + currentGameTree.action[i].next[j].x + currentGameTree.action[i].next[j].y).removeClass('possibleBlock');
+               }
+            }
+        }
+        isAttacking = false;
+    });
+    $('#gameTable').on('click','.possibleAttack',function(){
+        var id = $(this).attr('id');
+        var x = id.charAt(0);
+        var y = id.charAt(1);
+        for(var i = 0; i < currentGameTree.action.length; i++){
+            if(currentGameTree.action[i].x == x && currentGameTree.action[i].y == y){
+                if(!isAttacking){
+                    $('#' + x + y).addClass('isAttacking');
+                    $('#' + x + y).removeClass('possibleAttack');
+                    for(var j = 0; j < currentGameTree.action[i].next.length; j++){
+                        $('#' + currentGameTree.action[i].next[j].x + currentGameTree.action[i].next[j].y).addClass('possibleBlock');
+                    }
+                    attackingGameTree = currentGameTree.action[i];
+                    isAttacking = true;
+                }
+            }
+        }
+    });
+    $('#gameTable').on('click','.possibleBlock',function(){
+        var id = $(this).attr('id');
+        var x = id.charAt(0);
+        var y = id.charAt(1);
+        for(var i = 0; i < attackingGameTree.next.length; i++){
+            if(attackingGameTree.next[i].x == x && attackingGameTree.next[i].y == y){
+                currentGameTree = attackingGameTree.next[i].next;
+                isAttacking = false;
+                break;
+            }
+        }
+        nextGameSituation(currentGameTree);
     });
 
-    function getStatus(id){
-        console.log( currentGameTable[id] );
+    $('#pass').on('click',function(){
+        var lastIndex = currentGameTree.action.length-1;
+        if(currentGameTree.action[lastIndex].actType == 'game over'){
+            $('#message').fadeIn();
+            $('#message').text('A:'+currentGameTree.action[lastIndex].result.A+'\nB:'+currentGameTree.action[lastIndex].result.B);
+        }else if(currentGameTree.action[lastIndex].actType == 'pass' || currentGameTree.action[lastIndex].actType == 'no action'){
+            currentGameTree = currentGameTree.action[lastIndex].next;
+            isAttacking = false;
+            nextGameSituation(currentGameTree);
+        }else{
+            $('#message').fadeIn();
+            $('#message').text('it is impossible.');
+            $('#message').fadeOut();
+        }
+    });
+
+    function nextGameSituation(gameTree){
+        resetClass();
+        drawGameTable(gameTree.gameTable,gameTree.player);
+        clealyAttacker(gameTree.action);
+    }
+
+    function resetClass(){
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
+                $('#'+ x + y).removeClass();
+            }
+        }
     }
 });
