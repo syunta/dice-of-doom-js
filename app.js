@@ -8,15 +8,15 @@ $(function(){
     var LIMIT_VALUE_DICE_NUMBERS= 3;
 
     var currentGameTree = {};
+    var attackingGameTree = {};
 
     startApp();
 
     function startApp(){
-        gameTree = makeGameTree('A',setInitialGameTable(createGameTable()));
-        currentGameTree = gameTree;
+        currentGameTree = makeGameTree('A',setInitialGameTable(createGameTable()));
         drawGameTable(currentGameTree.gameTable);
-        attack(currentGameTree.action);
-        console.log( JSON.stringify(gameTree,null,4) );
+        clealyAttacker(currentGameTree.action);
+        console.log( JSON.stringify(currentGameTree,null,4) );
     }
 
     /* Data Structure*/
@@ -357,50 +357,76 @@ $(function(){
             }
             tableFrame += '</br>';
         }
-        $("body").html(tableFrame);
+        $(".gameTable").html(tableFrame);
     }
 
-    function attack(action){
+    function clealyAttacker(action){
         for(var i = 0; i < action.length; i++){
             if(action[i].actType == 'attack'){
-                clealyAttacker(action[i].x,action[i].y);
-                enableToSelectAttacker(action[i].x,action[i].y,action[i].next);
+                $('#' + action[i].x + action[i].y).addClass('possibleAttack');
             }
         }
     }
 
-    function enableToSelectAttacker(x,y,blockers){
-        var isAttacking = false;
-        $('#'+ x + y).on('click',function(){
-            if(!isAttacking){
-                for(var i = 0; i < blockers.length; i++){
-                    clealyBlocker(blockers[i].x,blockers[i].y);
-                }
-                isAttacking = true;
-            }else{
-                cancelAttack(blockers);
-                isAttacking = false;
+    var isAttacking = false;
+    $('.gameTable').on('click','.isAttacking',function (){
+        var id = $(this).attr('id');
+        var x = id.charAt(0);
+        var y = id.charAt(1);
+        $('#' + x + y).addClass('possibleAttack');
+        $('#' + x + y).removeClass('isAttacking');
+        for(var i = 0; i < currentGameTree.action.length; i++){
+            if(currentGameTree.action[i].x == x && currentGameTree.action[i].y == y){
+                for(var j = 0; j < currentGameTree.action[i].next.length; j++){
+                    $('#' + currentGameTree.action[i].next[j].x + currentGameTree.action[i].next[j].y).removeClass('possibleBlock');
+               }
             }
-        });
+        }
+        isAttacking = false;
+    });
+    $('.gameTable').on('click','.possibleAttack',function(){
+        var id = $(this).attr('id');
+        var x = id.charAt(0);
+        var y = id.charAt(1);
+        for(var i = 0; i < currentGameTree.action.length; i++){
+            if(currentGameTree.action[i].x == x && currentGameTree.action[i].y == y){
+                if(!isAttacking){
+                    $('#' + x + y).addClass('isAttacking');
+                    $('#' + x + y).removeClass('possibleAttack');
+                    for(var j = 0; j < currentGameTree.action[i].next.length; j++){
+                        $('#' + currentGameTree.action[i].next[j].x + currentGameTree.action[i].next[j].y).addClass('possibleBlock');
+                    }
+                    attackingGameTree = currentGameTree.action[i];
+                    isAttacking = true;
+                }
+            }
+        }
+    });
+    $('.gameTable').on('click','.possibleBlock',function(){
+        var id = $(this).attr('id');
+        var x = id.charAt(0);
+        var y = id.charAt(1);
+        for(var i = 0; i < attackingGameTree.next.length; i++){
+            if(attackingGameTree.next[i].x == x && attackingGameTree.next[i].y == y){
+                currentGameTree = attackingGameTree.next[i].next;
+                isAttacking = false;
+                break;
+            }
+        }
+        nextGameSituation(currentGameTree);
+    });
+
+    function nextGameSituation(gameTree){
+        resetClass();
+        drawGameTable(gameTree.gameTable);
+        clealyAttacker(gameTree.action);
     }
 
-    function clealyAttacker(x,y){
-        $('#'+ x + y).css({
-            'background-color' : 'yellow'
-        });
-    }
-
-    function clealyBlocker(x,y){
-        $('#'+ x + y).css({
-            'background-color' : 'red'
-        });
-    }
-
-    function cancelAttack(blockers){
-        for(var i = 0; i < blockers.length; i++){
-            $('#'+ blockers[i].x + blockers[i].y).css({
-                'background-color' : 'white'
-            });
+    function resetClass(){
+        for(var y = 1; y <= TABLE_SIZE; y++){
+            for(var x = 1; x <= TABLE_SIZE; x++){
+                $('#'+ x + y).removeClass();
+            }
         }
     }
 });
