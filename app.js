@@ -14,8 +14,8 @@ $(function(){
 
     function startApp(){
         currentGameTree = makeGameTree('A',setInitialGameTable(createGameTable()));
-
         nextGameSituation(currentGameTree);
+		console.log(JSON.stringify(currentGameTree,true,4));
     }
 
     /* Data Structure*/
@@ -277,19 +277,7 @@ $(function(){
             });
         }
 
-        if(actions.length == 0){
-            actions.push({
-                actType : 'pass',
-                next    :  activePass(
-                    player,
-                    gameTable,
-                    removedDice,
-                    wasPassed,
-                    depth
-                )
-            });
-            return actions;
-        }else if(canPass){
+        if(actions.length == 0 || canPass){
             actions.push({
                 actType : 'pass',
                 next    :  activePass(
@@ -343,6 +331,17 @@ $(function(){
     }
 
     /* UI */
+    function nextGameSituation(gameTree){
+		currentGameTree = gameTree;
+        resetClass();
+		if(gameTree.player == 'A'){
+        	drawGameTable(gameTree.gameTable,gameTree.player);
+        	clealyAttacker(gameTree.action);
+		}else{
+			nextActionOfAI(gameTree);	
+		}
+    }
+
     function drawGameTable(gameTable,player){
         var tableFrame = '';
         var space = '&nbsp;&nbsp;&nbsp;';
@@ -361,7 +360,7 @@ $(function(){
             tableFrame += '</br>';
         }
         $("#gameTable").html(tableFrame);
-        $("#player").text(player);
+        $("#player").text('player : ' + player);
     }
 
     function clealyAttacker(action){
@@ -373,21 +372,6 @@ $(function(){
     }
 
     var isAttacking = false;
-    $('#gameTable').on('click','.isAttacking',function (){
-        var id = $(this).attr('id');
-        var x = id.charAt(0);
-        var y = id.charAt(1);
-        $('#' + x + y).addClass('possibleAttack');
-        $('#' + x + y).removeClass('isAttacking');
-        for(var i = 0; i < currentGameTree.action.length; i++){
-            if(currentGameTree.action[i].x == x && currentGameTree.action[i].y == y){
-                for(var j = 0; j < currentGameTree.action[i].next.length; j++){
-                    $('#' + currentGameTree.action[i].next[j].x + currentGameTree.action[i].next[j].y).removeClass('possibleBlock');
-               }
-            }
-        }
-        isAttacking = false;
-    });
     $('#gameTable').on('click','.possibleAttack',function(){
         var id = $(this).attr('id');
         var x = id.charAt(0);
@@ -395,8 +379,7 @@ $(function(){
         for(var i = 0; i < currentGameTree.action.length; i++){
             if(currentGameTree.action[i].x == x && currentGameTree.action[i].y == y){
                 if(!isAttacking){
-                    $('#' + x + y).addClass('isAttacking');
-                    $('#' + x + y).removeClass('possibleAttack');
+                    $('#' + x + y).addClass('isAttacking').removeClass('possibleAttack');
                     for(var j = 0; j < currentGameTree.action[i].next.length; j++){
                         $('#' + currentGameTree.action[i].next[j].x + currentGameTree.action[i].next[j].y).addClass('possibleBlock');
                     }
@@ -405,8 +388,20 @@ $(function(){
                 }
             }
         }
-    });
-    $('#gameTable').on('click','.possibleBlock',function(){
+    }).on('click','.isAttacking',function(){
+        var id = $(this).attr('id');
+        var x = id.charAt(0);
+        var y = id.charAt(1);
+        $('#' + x + y).addClass('possibleAttack').removeClass('isAttacking');
+        for(var i = 0; i < currentGameTree.action.length; i++){
+            if(currentGameTree.action[i].x == x && currentGameTree.action[i].y == y){
+                for(var j = 0; j < currentGameTree.action[i].next.length; j++){
+                    $('#' + currentGameTree.action[i].next[j].x + currentGameTree.action[i].next[j].y).removeClass('possibleBlock');
+               }
+            }
+        }
+        isAttacking = false;
+    }).on('click','.possibleBlock',function(){
         var id = $(this).attr('id');
         var x = id.charAt(0);
         var y = id.charAt(1);
@@ -422,25 +417,18 @@ $(function(){
 
     $('#pass').on('click',function(){
         var lastIndex = currentGameTree.action.length-1;
-        if(currentGameTree.action[lastIndex].actType == 'game over'){
-            $('#message').fadeIn();
-            $('#message').text('A:'+currentGameTree.action[lastIndex].result.A+'\nB:'+currentGameTree.action[lastIndex].result.B);
-        }else if(currentGameTree.action[lastIndex].actType == 'pass' || currentGameTree.action[lastIndex].actType == 'no action'){
+		var actType = currentGameTree.action[lastIndex].actType;
+
+        if(actType == 'pass' || actType == 'no action'){
             currentGameTree = currentGameTree.action[lastIndex].next;
             isAttacking = false;
             nextGameSituation(currentGameTree);
+        }else if(actType == 'game over'){
+			showResult(currentGameTree);
         }else{
-            $('#message').fadeIn();
-            $('#message').text('it is impossible.');
-            $('#message').fadeOut();
+			showIllegalMessage();
         }
     });
-
-    function nextGameSituation(gameTree){
-        resetClass();
-        drawGameTable(gameTree.gameTable,gameTree.player);
-        clealyAttacker(gameTree.action);
-    }
 
     function resetClass(){
         for(var y = 1; y <= TABLE_SIZE; y++){
@@ -449,4 +437,38 @@ $(function(){
             }
         }
     }
+
+	function showResult(gameTree){
+		$('#message').fadeIn();
+		$('#message').text('A:'+gameTree.action[0].result.A+'\nB:'+gameTree.action[0].result.B);
+	}
+
+	function showIllegalMessage(){
+		$('#message').fadeIn();
+		$('#message').text('it is impossible.');
+		$('#message').fadeOut();
+	}
+
+	/* AI */
+	function nextActionOfAI(gameTree){
+		drawGameTable(gameTree.gameTable,gameTree.player);
+		var selectedActionIndex = selectActionOfAI(gameTree);
+		gameTree = makeAIActedSituation(gameTree,selectedActionIndex);
+		setTimeout(function(){nextGameSituation(gameTree);},700);
+	}
+
+	function selectActionOfAI(gameTree){
+		return 0;
+	}
+
+	function makeAIActedSituation(gameTree,selectedActionIndex){
+		if(gameTree.action[selectedActionIndex].actType == 'attack'){
+			gameTree = gameTree.action[selectedActionIndex].next[selectedActionIndex].next;
+		}else if(gameTree.action[selectedActionIndex].actType == 'pass' || gameTree.action[selectedActionIndex].actType == 'no action'){
+			gameTree = gameTree.action[selectedActionIndex].next;
+		}else if(gameTree.action[selectedActionIndex].actType == 'game over'){
+			showResult(gameTree);
+		}
+		return gameTree;
+	}
 });
