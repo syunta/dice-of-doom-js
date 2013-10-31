@@ -1,10 +1,7 @@
 $(function(){
     
     var TABLE_SIZE = 2;
-    var TURN = {
-        A:{next:'B'},
-        B:{next:'A'}
-    };
+    var TURN = {A:{next:'B'},B:{next:'A'}};
     var LIMIT_VALUE_DICE_NUMBERS= 3;
 
     var currentGameTree = {};
@@ -206,6 +203,31 @@ $(function(){
         return removedDice + additionalDice;
     }
 
+	function calculateConclusiveScore(gameTable){
+		var scoreType = {
+			AIwin : 1,
+			draw  : 0.5,
+			AIlose: 0.0
+		};
+		var score;
+		var result = countDomain(gameTable);
+		if(result.A < result.B){
+			score = scoreType.AIwin;
+		}else if(result.B == result.A){
+			score = scoreType.draw;
+		}else{
+			score = scoreType.AIlose;
+		}
+		return score;
+	}
+
+	function calculateOpposingScore(action){
+		for(var i = 0; i < action.next.action.length; i++){
+			action.score += action.next.action[i].score;
+		}
+		return action;
+	}
+
     /* Record of a game of go */
     function makeGameTree(player,gameTable){
         var wasPassed = false;
@@ -223,16 +245,19 @@ $(function(){
                 return {
                     player    : player,
                     gameTable : gameTable,
-                    action    : [{
-                        actType : 'no action',
-                        next    : makePhase(nextPlayer(player),gameTable,forciblyPass(),depth)
-                    }]
+                    action    : [
+						calculateOpposingScore({
+							actType : 'no action',
+							score   : 0,
+							next    : makePhase(nextPlayer(player),gameTable,forciblyPass(),depth),
+						})
+					]
                 };
             }else{
                 return {
                     player    : player,
                     gameTable : gameTable,
-                    action    : [gameOver(gameTable)],
+                    action    : [gameOver(gameTable)]
                 };
             }
         }
@@ -261,72 +286,87 @@ $(function(){
         var attackers = listAttackers(player,gameTable);
 
         for(var i = 0; i < attackers.length; i++){
-            actions.push({
-                player  : player,
-                actType : 'attack',
-                x       : attackers[i].x,
-                y       : attackers[i].y,
-                next    : listBlockerSelections(
-                    player,
-                    gameTable,
-                    removedDice,
-                    attackers[i],
-                    enableToPass(),
-                    depth
-                )
-            });
+            actions.push(
+				calculateOpposingScore({
+					player  : player,
+					actType : 'attack',
+					x       : attackers[i].x,
+					y       : attackers[i].y,
+					score   : 0,
+					next    : listBlockerSelections(
+						player,
+						gameTable,
+						removedDice,
+						attackers[i],
+						canPass,
+						depth
+					)
+				})
+			);
         }
+		return considerPassAction(actions,player,gameTable,removedDice,canPass,wasPassed,depth);
+    }
 
+	function considerPassAction(actions,player,gameTable,removedDice,canPass,wasPassed,depth){
         if(actions.length == 0 || canPass){
-            actions.push({
-                actType : 'pass',
-                next    :  activePass(
-                    player,
-                    gameTable,
-                    removedDice,
-                    wasPassed,
-                    depth
-                )
-            });
+            actions.push(
+				calculateOpposingScore({
+					actType : 'pass',
+					score   : 0,
+					next    : activePass(
+						player,
+						gameTable,
+						removedDice,
+						wasPassed,
+						depth
+					)
+				})
+			);
             return actions;
         }else{
             return actions;
         }
-    }
+	}
     
     function listBlockerSelections(player,gameTable,removedDice,attacker,canPass,wasPassed,depth){
-        var actions = [];
+        var blockerSelections = [];
         var blockers = listBlockersAgainstOneAttacker(player,gameTable,attacker);
         for(var i = 0; i < blockers.length; i++){
-            actions.push({
-                actType : 'block',
-                x       : blockers[i].x,
-                y       : blockers[i].y,
-                next    : makePhaseActions(
-                    player,
-                    makeAttackedGameTable(player,gameTable,attacker,blockers[i]),
-                    addRemovedDice(removedDice,blockers[i].dice),
-                    enableToPass(),
-                    depth
-                )
-            });
+            blockerSelections.push(
+				calculateOpposingScore({
+					actType : 'block',
+					x       : blockers[i].x,
+					y       : blockers[i].y,
+					score   : 0,
+					next    : makePhaseActions(
+						player,
+						makeAttackedGameTable(player,gameTable,attacker,blockers[i]),
+						addRemovedDice(removedDice,blockers[i].dice),
+						enableToPass(),
+						depth
+					),
+				})
+			);
         }
-        return actions;
+        return {
+			action : blockerSelections
+		};
     }
 
     function activePass(player,gameTable,removedDice,wasPassed,depth){
         return makePhase(
-            nextPlayer(player),
-            makeSuppliedGameTable(player,gameTable,removedDice),
-            wasPassed,
-            depth
-        );
+			nextPlayer(player),
+			makeSuppliedGameTable(player,gameTable,removedDice),
+			wasPassed,
+			depth
+		);
     }
 
     function gameOver(gameTable){
         return {
             actType : 'game over',
-            result  : countDomain(gameTable)
+            result  : countDomain(gameTable),
+			score   : calculateConclusiveScore(gameTable)
         };
     }
 
@@ -380,8 +420,9 @@ $(function(){
             if(currentGameTree.action[i].x == x && currentGameTree.action[i].y == y){
                 if(!isAttacking){
                     $('#' + x + y).addClass('isAttacking').removeClass('possibleAttack');
-                    for(var j = 0; j < currentGameTree.action[i].next.length; j++){
-                        $('#' + currentGameTree.action[i].next[j].x + currentGameTree.action[i].next[j].y).addClass('possibleBlock');
+                    for(var j = 0; j < currentGameTree.action[i].next.action.length; j++){
+                        $('#' + currentGameTree.action[i].next.action[j].x + currentGameTree.action[i].next.action[j].y)
+						.addClass('possibleBlock');
                     }
                     attackingGameTree = currentGameTree.action[i];
                     isAttacking = true;
@@ -395,8 +436,9 @@ $(function(){
         $('#' + x + y).addClass('possibleAttack').removeClass('isAttacking');
         for(var i = 0; i < currentGameTree.action.length; i++){
             if(currentGameTree.action[i].x == x && currentGameTree.action[i].y == y){
-                for(var j = 0; j < currentGameTree.action[i].next.length; j++){
-                    $('#' + currentGameTree.action[i].next[j].x + currentGameTree.action[i].next[j].y).removeClass('possibleBlock');
+                for(var j = 0; j < currentGameTree.action[i].next.action.length; j++){
+                    $('#' + currentGameTree.action[i].next.action[j].x + currentGameTree.action[i].next.action[j].y)
+					.removeClass('possibleBlock');
                }
             }
         }
@@ -405,9 +447,9 @@ $(function(){
         var id = $(this).attr('id');
         var x = id.charAt(0);
         var y = id.charAt(1);
-        for(var i = 0; i < attackingGameTree.next.length; i++){
-            if(attackingGameTree.next[i].x == x && attackingGameTree.next[i].y == y){
-                currentGameTree = attackingGameTree.next[i].next;
+        for(var i = 0; i < attackingGameTree.next.action.length; i++){
+            if(attackingGameTree.next.action[i].x == x && attackingGameTree.next.action[i].y == y){
+                currentGameTree = attackingGameTree.next.action[i].next;
                 isAttacking = false;
                 break;
             }
@@ -463,7 +505,7 @@ $(function(){
 
 	function makeAIActedSituation(gameTree,selectedActionIndex){
 		if(gameTree.action[selectedActionIndex].actType == 'attack'){
-			gameTree = gameTree.action[selectedActionIndex].next[selectedActionIndex].next;
+			gameTree = gameTree.action[selectedActionIndex].next.action[selectedActionIndex].next;
 		}else if(gameTree.action[selectedActionIndex].actType == 'pass' || gameTree.action[selectedActionIndex].actType == 'no action'){
 			gameTree = gameTree.action[selectedActionIndex].next;
 		}else if(gameTree.action[selectedActionIndex].actType == 'game over'){
