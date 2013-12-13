@@ -9,62 +9,62 @@ $(function(){
 
     startApp();
 
+    function test(gameTree){
+        console.log(JSON.stringify(gameTree,true,4));
+    }
+
     function startApp(){
         currentGameTree = makeGameTree('A',setInitialGameTable(createGameTable()));
         nextGameSituation(currentGameTree);
+
+        test(currentGameTree);
     }
 
     /* Data Structure*/
     function createGameTable(){
         var gameTable = [];
-        for(var x = 0; x <= TABLE_SIZE+1; x++){
+        for(var x = 0; x < TABLE_SIZE; x++){
             gameTable[x] = [];
         }
-        for(var y = 0; y <= TABLE_SIZE+1; y++){
-            for(var x = 0; x <= TABLE_SIZE+1; x++){
-                if(y == 0 || x == 0){
-                    gameTable[x][y] = {};
-                }else if(y == TABLE_SIZE+1 || x == TABLE_SIZE+1){
-                    gameTable[x][y] = {};
-                }else{
-                    gameTable[x][y] = {
-                        x     : x,
-                        y     : y,
-                        owner : null,
-                        dice  : 0
-                    };
-                }
+        for(var y = 0; y < TABLE_SIZE; y++){
+            for(var x = 0; x < TABLE_SIZE; x++){
+                gameTable[x][y] = {
+                    x     : x,
+                    y     : y,
+                    owner : null,
+                    dice  : 0
+                };
             }
         }
         return gameTable;
     }
 
     function getLinkedHexes(gameTable,x,y){
-        var linkedHexes 
-            = getUpwardHexes(gameTable,x,y).concat(
-                getHorizontalHexes(gameTable,x,y),
-                getDownwardHexes(gameTable,x,y)
-            );
+        var linkedHexes = 
+            getUpwardHexes(gameTable,x,y).concat(
+            getHorizontalHexes(gameTable,x,y),
+            getDownwardHexes(gameTable,x,y)
+        );
         return linkedHexes;
     }
 
     function getUpwardHexes(gameTable,x,y){
         var upwardHexes = [];
-        if(!$.isEmptyObject(gameTable[x+1][y+1])){
-            upwardHexes.push(gameTable[x+1][y+1]);
-        }
-        if(!$.isEmptyObject(gameTable[x][y+1])){
-            upwardHexes.push(gameTable[x][y+1]);
+        if(y != 0){
+            upwardHexes.push(gameTable[x][y-1]);
+            if(x != 0){
+                upwardHexes.push(gameTable[x-1][y-1]);
+            }
         }
         return upwardHexes;
     }
 
     function getHorizontalHexes(gameTable,x,y){
         var horizontalHexes = [];
-        if(!$.isEmptyObject(gameTable[x-1][y])){
+        if(x != 0){
             horizontalHexes.push(gameTable[x-1][y]);
         }
-        if(!$.isEmptyObject(gameTable[x+1][y])){
+        if(x != TABLE_SIZE-1){
             horizontalHexes.push(gameTable[x+1][y]);
         }
         return horizontalHexes;
@@ -72,11 +72,11 @@ $(function(){
 
     function getDownwardHexes(gameTable,x,y){
         var downwardHexes =[];
-        if(!$.isEmptyObject(gameTable[x][y-1])){
-            downwardHexes.push(gameTable[x][y-1]);
-        }
-        if(!$.isEmptyObject(gameTable[x-1][y-1])){
-            downwardHexes.push(gameTable[x-1][y-1]);
+        if(y != TABLE_SIZE-1){
+            downwardHexes.push(gameTable[x][y+1]);
+            if(x != TABLE_SIZE-1){
+                downwardHexes.push(gameTable[x+1][y+1]);
+            }
         }
         return downwardHexes;
     }
@@ -84,8 +84,8 @@ $(function(){
     /* Game Engine */
     function setInitialGameTable(gameTable){
         var players = ['A','B'];
-        for(var y = 1; y <= TABLE_SIZE; y++){
-            for(var x = 1; x <= TABLE_SIZE; x++){
+        for(var y = 0; y < TABLE_SIZE; y++){
+            for(var x = 0; x < TABLE_SIZE; x++){
                 gameTable[x][y].owner = players[getRandom(0,1)];
                 gameTable[x][y].dice = getRandom(1,LIMIT_VALUE_DICE_NUMBERS);
             }
@@ -99,8 +99,8 @@ $(function(){
 
     function listAttackers(player,gameTable){
         var attackers = [];
-        for(var y = 1; y <= TABLE_SIZE; y++){
-            for(var x = 1; x <= TABLE_SIZE; x++){
+        for(var y = 0; y < TABLE_SIZE; y++){
+            for(var x = 0; x < TABLE_SIZE; x++){
                 if(gameTable[x][y].owner == player){
                     if(2 <= gameTable[x][y].dice){
                         if(listBlockersAgainstOneAttacker(player,gameTable,gameTable[x][y]).length != 0){ //ver1 rule
@@ -143,8 +143,8 @@ $(function(){
         var totalSupplyDice = removedDice - 1;
         var remainingDice = totalSupplyDice;
         var supplyDice = 1;
-        for(var y = 1; y <= TABLE_SIZE; y++){
-            for(var x = 1; x <= TABLE_SIZE; x++){
+        for(var y = 0; y < TABLE_SIZE; y++){
+            for(var x = 0; x < TABLE_SIZE; x++){
                 if(suppliedGameTable[x][y].owner == player && suppliedGameTable[x][y].dice < LIMIT_VALUE_DICE_NUMBERS){
                     if(remainingDice < supplyDice){
                         supplyDice = remainingDice;
@@ -190,8 +190,8 @@ $(function(){
 
     function countDomain(gameTable){
         var result = {A:0,B:0};
-        for(var y = 1; y <= TABLE_SIZE; y++){
-            for(var x = 1; x <= TABLE_SIZE; x++){
+        for(var y = 0; y < TABLE_SIZE; y++){
+            for(var x = 0; x < TABLE_SIZE; x++){
                 result[gameTable[x][y].owner] += 1;
             }
         }
@@ -373,11 +373,11 @@ $(function(){
         var tableFrame = '';
         var space = '&nbsp;&nbsp;&nbsp;';
 
-        for(var y = 1; y <= TABLE_SIZE; y++){
-            for(var x = TABLE_SIZE; y <= x; x--){
+        for(var y = 0; y < TABLE_SIZE; y++){
+            for(var i = TABLE_SIZE; y < i; i--){
                 tableFrame += space;
             }
-            for(var x = 1; x <= TABLE_SIZE; x++ ){
+            for(var x = 0; x < TABLE_SIZE; x++ ){
                 tableFrame += 
                     '<span id = ' + x + y + '>' +
                     gameTable[x][y].owner + ':' +
@@ -460,8 +460,8 @@ $(function(){
     });
 
     function resetClass(){
-        for(var y = 1; y <= TABLE_SIZE; y++){
-            for(var x = 1; x <= TABLE_SIZE; x++){
+        for(var y = 0; y < TABLE_SIZE; y++){
+            for(var x = 0; x < TABLE_SIZE; x++){
                 $('#'+ x + y).removeClass();
             }
         }
