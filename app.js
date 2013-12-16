@@ -16,7 +16,7 @@ $(function(){
         currentGameTree = makeGameTree('A',setInitialGameTable(createGameTable()));
         nextGameSituation(currentGameTree);
 
-        test(currentGameTree);
+//        test(currentGameTree);
     }
 
     /* Data Structure*/
@@ -472,16 +472,17 @@ $(function(){
     function nextGameSituation(gameTree){
         currentGameTree = gameTree;
         if(gameTree.player == 'A'){
-            drawGameTable(gameTree.gameTable);
-            drawCurrentPlayer(gameTree.player);
-            clealyAttacker(gameTree.action);
+            setUpUI(gameTree);
         }else{
-            drawGameTable(gameTree.gameTable);
-            drawCurrentPlayer(gameTree.player);
-            clealyAttacker(gameTree.action);
-
+            setUpUI(gameTree);
             nextActionOfAI(gameTree);        
         }
+    }
+
+    function setUpUI(gameTree){
+        drawGameTable(gameTree.gameTable);
+        drawCurrentPlayer(gameTree.player);
+        clealyAttacker(gameTree.action);
     }
 
     function nextActionOfAI(gameTree){
