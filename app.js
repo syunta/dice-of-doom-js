@@ -5,7 +5,6 @@ $(function(){
     var LIMIT_VALUE_DICE_NUMBERS= 3;
 
     var currentGameTree = {};
-    var attackingGameTree = {};
 
     startApp();
 
@@ -369,7 +368,7 @@ $(function(){
     }
 
     /* UI */
-    function drawGameTable(gameTable,player){
+    function drawGameTable(gameTable){
         var tableFrame = '';
         var space = '&nbsp;&nbsp;&nbsp;';
 
@@ -387,6 +386,9 @@ $(function(){
             tableFrame += '</br>';
         }
         $("#gameTable").html(tableFrame);
+    }
+
+    function drawCurrentPlayer(player){    
         $("#player").text('player : ' + player);
     }
 
@@ -399,6 +401,7 @@ $(function(){
     }
 
     var isAttacking = false;
+    var attackingGameTree = {};
     $('#gameTable').on('click','.possibleAttack',function(){
         var id = $(this).attr('id');
         var x = id.charAt(0);
@@ -459,14 +462,6 @@ $(function(){
         }
     });
 
-    function resetClass(){
-        for(var y = 0; y < TABLE_SIZE; y++){
-            for(var x = 0; x < TABLE_SIZE; x++){
-                $('#'+ x + y).removeClass();
-            }
-        }
-    }
-
     function showResult(gameTree){
         $('#message').fadeIn();
         $('#message').text('A:'+gameTree.action[0].result.A+'\nB:'+gameTree.action[0].result.B);
@@ -481,12 +476,15 @@ $(function(){
     /* AI */
     function nextGameSituation(gameTree){
         currentGameTree = gameTree;
-        resetClass();
         if(gameTree.player == 'A'){
-            drawGameTable(gameTree.gameTable,gameTree.player);
+            drawGameTable(gameTree.gameTable);
+            drawCurrentPlayer(gameTree.player);
             clealyAttacker(gameTree.action);
         }else{
-            drawGameTable(gameTree.gameTable,gameTree.player);
+            drawGameTable(gameTree.gameTable);
+            drawCurrentPlayer(gameTree.player);
+            clealyAttacker(gameTree.action);
+
             nextActionOfAI(gameTree);        
         }
     }
