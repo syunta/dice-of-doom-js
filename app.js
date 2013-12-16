@@ -400,7 +400,6 @@ $(function(){
         }
     }
 
-    var isAttacking = false;
     var attackingGameTree = {};
     $('#gameTable').on('click','.possibleAttack',function(){
         var id = $(this).attr('id');
@@ -408,14 +407,13 @@ $(function(){
         var y = id.charAt(1);
         for(var i = 0; i < currentGameTree.action.length; i++){
             if(currentGameTree.action[i].x == x && currentGameTree.action[i].y == y){
-                if(!isAttacking){
-                    $('#' + x + y).addClass('isAttacking').removeClass('possibleAttack');
+                if( !$('#gameTable').children().hasClass('isAttacking') ){
+                    $('#' + x + y).addClass('isAttacking');
                     for(var j = 0; j < currentGameTree.action[i].next.action.length; j++){
                         $('#' + currentGameTree.action[i].next.action[j].x + currentGameTree.action[i].next.action[j].y)
                         .addClass('possibleBlock');
                     }
                     attackingGameTree = currentGameTree.action[i];
-                    isAttacking = true;
                 }
             }
         }
@@ -423,7 +421,7 @@ $(function(){
         var id = $(this).attr('id');
         var x = id.charAt(0);
         var y = id.charAt(1);
-        $('#' + x + y).addClass('possibleAttack').removeClass('isAttacking');
+        $('#' + x + y).removeClass('isAttacking');
         for(var i = 0; i < currentGameTree.action.length; i++){
             if(currentGameTree.action[i].x == x && currentGameTree.action[i].y == y){
                 for(var j = 0; j < currentGameTree.action[i].next.action.length; j++){
@@ -432,7 +430,6 @@ $(function(){
                 }
             }
         }
-        isAttacking = false;
     }).on('click','.possibleBlock',function(){
         var id = $(this).attr('id');
         var x = id.charAt(0);
@@ -440,7 +437,6 @@ $(function(){
         for(var i = 0; i < attackingGameTree.next.action.length; i++){
             if(attackingGameTree.next.action[i].x == x && attackingGameTree.next.action[i].y == y){
                 currentGameTree = attackingGameTree.next.action[i].next;
-                isAttacking = false;
                 break;
             }
         }
@@ -453,7 +449,6 @@ $(function(){
 
         if(actType == 'pass' || actType == 'no action'){
             currentGameTree = currentGameTree.action[lastIndex].next;
-            isAttacking = false;
             nextGameSituation(currentGameTree);
         }else if(actType == 'game over'){
             showResult(currentGameTree);
