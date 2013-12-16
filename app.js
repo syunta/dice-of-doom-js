@@ -400,7 +400,6 @@ $(function(){
         }
     }
 
-    var attackingGameTree = {};
     $('#gameTable').on('click','.possibleAttack',function(){
         var id = $(this).attr('id');
         var x = id.charAt(0);
@@ -413,7 +412,6 @@ $(function(){
                         $('#' + currentGameTree.action[i].next.action[j].x + currentGameTree.action[i].next.action[j].y)
                         .addClass('possibleBlock');
                     }
-                    attackingGameTree = currentGameTree.action[i];
                 }
             }
         }
@@ -431,12 +429,25 @@ $(function(){
             }
         }
     }).on('click','.possibleBlock',function(){
-        var id = $(this).attr('id');
-        var x = id.charAt(0);
-        var y = id.charAt(1);
-        for(var i = 0; i < attackingGameTree.next.action.length; i++){
-            if(attackingGameTree.next.action[i].x == x && attackingGameTree.next.action[i].y == y){
-                currentGameTree = attackingGameTree.next.action[i].next;
+        var blockerId = $(this).attr('id');
+        var blockerX = blockerId.charAt(0);
+        var blockerY = blockerId.charAt(1);
+
+        var attackerId = $('.isAttacking').attr('id');
+        var attackerX = attackerId.charAt(0);
+        var attackerY = attackerId.charAt(1);
+
+        var SSS ={};
+        for(var i = 0; i < currentGameTree.action.length;i++){
+            if(currentGameTree.action[i].x == attackerX && currentGameTree.action[i].y == attackerY){
+                SSS = currentGameTree.action[i].next;
+                break;
+            }
+        }
+
+        for(var i = 0; i < SSS.action.length; i++){
+            if(SSS.action[i].x == blockerX && SSS.action[i].y == blockerY){
+                currentGameTree = SSS.action[i].next;
                 break;
             }
         }
