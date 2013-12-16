@@ -404,23 +404,23 @@ $(function(){
         var position = convertToPositionFromId( $(this) );
         for(var i = 0; i < currentGameTree.action.length; i++){
             if(currentGameTree.action[i].x == position.x && currentGameTree.action[i].y == position.y){
+            var nextGameTree = currentGameTree.action[i].next;
                 if( !$('#gameTable').children().hasClass('isAttacking') ){
-                    $('#' + x + y).addClass('isAttacking');
-                    for(var j = 0; j < currentGameTree.action[i].next.action.length; j++){
-                        $('#' + currentGameTree.action[i].next.action[j].x + currentGameTree.action[i].next.action[j].y)
-                        .addClass('possibleBlock');
+                    $('#' + position.x + position.y).addClass('isAttacking');
+                    for(var j = 0; j < nextGameTree.action.length; j++){
+                        $('#' + nextGameTree.action[j].x + nextGameTree.action[j].y).addClass('possibleBlock');
                     }
                 }
             }
         }
     }).on('click','.isAttacking',function(){
         var position = convertToPositionFromId( $(this) );
-        $('#' + x + y).removeClass('isAttacking');
+        $('#' + position.x + position.y).removeClass('isAttacking');
         for(var i = 0; i < currentGameTree.action.length; i++){
             if(currentGameTree.action[i].x == position.x && currentGameTree.action[i].y == position.y){
-                for(var j = 0; j < currentGameTree.action[i].next.action.length; j++){
-                    $('#' + currentGameTree.action[i].next.action[j].x + currentGameTree.action[i].next.action[j].y)
-                    .removeClass('possibleBlock');
+                var nextGameTree = currentGameTree.action[i].next;
+                for(var j = 0; j < nextGameTree.action.length; j++){
+                    $('#' + nextGameTree.action[j].x + nextGameTree.action[j].y).removeClass('possibleBlock');
                 }
             }
         }
@@ -436,7 +436,7 @@ $(function(){
             }
         }
 
-        for(var i = 0; i < nextGameSituation.action.length; i++){
+        for(var i = 0; i < nextGameTree.action.length; i++){
             if(nextGameTree.action[i].x == blocker.x && nextGameTree.action[i].y == blocker.y){
                 currentGameTree = nextGameTree.action[i].next;
                 break;
@@ -444,6 +444,14 @@ $(function(){
         }
         nextGameSituation(currentGameTree);
     });
+
+    function convertToPositionFromId($obj){
+        var id = $obj.attr('id');
+        var position = {};
+        position.x = id.charAt(0);
+        position.y = id.charAt(1);
+        return position;
+    }
 
     $('#pass').on('click',function(){
         var lastIndex = currentGameTree.action.length-1;
@@ -468,14 +476,6 @@ $(function(){
         $('#message').fadeIn();
         $('#message').text('it is impossible.');
         $('#message').fadeOut();
-    }
-
-    function convertToPositionFromId($obj){
-        var id = $obj.attr('id');
-        var position = {};
-        position.x = id.charAt(0);
-        position.y = id.charAt(1);
-        return position;
     }
 
     /* AI */
