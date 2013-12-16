@@ -401,11 +401,9 @@ $(function(){
     }
 
     $('#gameTable').on('click','.possibleAttack',function(){
-        var id = $(this).attr('id');
-        var x = id.charAt(0);
-        var y = id.charAt(1);
+        var position = convertToPositionFromId( $(this) );
         for(var i = 0; i < currentGameTree.action.length; i++){
-            if(currentGameTree.action[i].x == x && currentGameTree.action[i].y == y){
+            if(currentGameTree.action[i].x == position.x && currentGameTree.action[i].y == position.y){
                 if( !$('#gameTable').children().hasClass('isAttacking') ){
                     $('#' + x + y).addClass('isAttacking');
                     for(var j = 0; j < currentGameTree.action[i].next.action.length; j++){
@@ -416,12 +414,10 @@ $(function(){
             }
         }
     }).on('click','.isAttacking',function(){
-        var id = $(this).attr('id');
-        var x = id.charAt(0);
-        var y = id.charAt(1);
+        var position = convertToPositionFromId( $(this) );
         $('#' + x + y).removeClass('isAttacking');
         for(var i = 0; i < currentGameTree.action.length; i++){
-            if(currentGameTree.action[i].x == x && currentGameTree.action[i].y == y){
+            if(currentGameTree.action[i].x == position.x && currentGameTree.action[i].y == position.y){
                 for(var j = 0; j < currentGameTree.action[i].next.action.length; j++){
                     $('#' + currentGameTree.action[i].next.action[j].x + currentGameTree.action[i].next.action[j].y)
                     .removeClass('possibleBlock');
@@ -429,25 +425,20 @@ $(function(){
             }
         }
     }).on('click','.possibleBlock',function(){
-        var blockerId = $(this).attr('id');
-        var blockerX = blockerId.charAt(0);
-        var blockerY = blockerId.charAt(1);
+        var attacker = convertToPositionFromId( $('.isAttacking') );
+        var blocker = convertToPositionFromId( $(this) );
 
-        var attackerId = $('.isAttacking').attr('id');
-        var attackerX = attackerId.charAt(0);
-        var attackerY = attackerId.charAt(1);
-
-        var SSS ={};
+        var nextGameTree ={};
         for(var i = 0; i < currentGameTree.action.length;i++){
-            if(currentGameTree.action[i].x == attackerX && currentGameTree.action[i].y == attackerY){
-                SSS = currentGameTree.action[i].next;
+            if(currentGameTree.action[i].x == attacker.x && currentGameTree.action[i].y == attacker.y){
+                nextGameTree = currentGameTree.action[i].next;
                 break;
             }
         }
 
-        for(var i = 0; i < SSS.action.length; i++){
-            if(SSS.action[i].x == blockerX && SSS.action[i].y == blockerY){
-                currentGameTree = SSS.action[i].next;
+        for(var i = 0; i < nextGameSituation.action.length; i++){
+            if(nextGameTree.action[i].x == blocker.x && nextGameTree.action[i].y == blocker.y){
+                currentGameTree = nextGameTree.action[i].next;
                 break;
             }
         }
@@ -477,6 +468,14 @@ $(function(){
         $('#message').fadeIn();
         $('#message').text('it is impossible.');
         $('#message').fadeOut();
+    }
+
+    function convertToPositionFromId($obj){
+        var id = $obj.attr('id');
+        var position = {};
+        position.x = id.charAt(0);
+        position.y = id.charAt(1);
+        return position;
     }
 
     /* AI */
