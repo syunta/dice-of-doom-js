@@ -262,11 +262,14 @@ $(function(){
     function makeActionsTree(player,gameTable,wasPassed,depth){
         var removedDice = 0;
         var canPass = false;
-        return {
-            player    : player,
-            gameTable : gameTable,
-            action    : listActions(player,gameTable,removedDice,canPass,wasPassed,depth)
-        };
+        return makePhaseActions(
+            player,
+            gameTable,
+            removedDice,
+            canPass,
+            wasPassed,
+            depth
+        );
     }
 
     function makePhaseActions(player,gameTable,removedDice,canPass,wasPassed,depth){
