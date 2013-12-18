@@ -297,6 +297,7 @@ $(function(){
                         removedDice,
                         attackers[i],
                         canPass,
+                        wasPassed,
                         depth
                     )
                 })
@@ -341,6 +342,7 @@ $(function(){
                         makeAttackedGameTable(player,gameTable,attacker,blockers[i]),
                         addRemovedDice(removedDice,blockers[i].dice),
                         enableToPass(),
+                        wasPassed,
                         depth
                     )
                 })
