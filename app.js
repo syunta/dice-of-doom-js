@@ -1,22 +1,24 @@
 $(function(){
 
-    var TABLE_SIZE = 2;
+    var TABLE_SIZE = 3;
     var TURN = {A:{next:'B'},B:{next:'A'}};
     var LIMIT_VALUE_DICE_NUMBERS= 3;
 
     var currentGameTree = {};
 
+    var cache = {};
+
     startApp();
 
     function test(gameTree){
-        console.log(JSON.stringify(gameTree,true,4));
+        console.log(JSON.stringify(gameTree,true,2));
     }
 
     function startApp(){
         currentGameTree = makeGameTree('A',setInitialGameTable(createGameTable()));
         nextGameSituation(currentGameTree);
 
-//        test(currentGameTree);
+//        test(cache);
     }
 
     /* Data Structure*/
@@ -262,22 +264,33 @@ $(function(){
     function makeActionsTree(player,gameTable,wasPassed,depth){
         var removedDice = 0;
         var canPass = false;
-        return makePhaseActions(
-            player,
-            gameTable,
-            removedDice,
-            canPass,
-            wasPassed,
-            depth
-        );
+        return makePhaseActions(player,gameTable,removedDice,canPass,wasPassed,depth);
     }
 
     function makePhaseActions(player,gameTable,removedDice,canPass,wasPassed,depth){
-        return {
-            player    : player,
-            gameTable : gameTable,
-            action    : listActions(player,gameTable,removedDice,canPass,wasPassed,depth)
-        };
+        var key = generateCacheKey(player,gameTable,removedDice,canPass,wasPassed,depth);
+        if(!cache[key]){
+            cache[key] = {
+                player    : player,
+                gameTable : gameTable,
+                action    : listActions(player,gameTable,removedDice,canPass,wasPassed,depth)
+            };
+        }
+        return cache[key];
+    }
+
+    function generateCacheKey(player,gameTable,removedDice,canPass,wasPassed,depth){
+        var stringGameTable = '';
+        for(x = 0; x < TABLE_SIZE; x++){
+            for(y = 0; y < TABLE_SIZE; y++){
+                stringGameTable += gameTable[x][y].x;
+                stringGameTable += gameTable[x][y].y;
+                stringGameTable += gameTable[x][y].owner;
+                stringGameTable += gameTable[x][y].dice;
+            }
+        }
+        var key = player + stringGameTable + removedDice + canPass + wasPassed + depth;
+        return key;
     }
 
     function listActions(player,gameTable,removedDice,canPass,wasPassed,depth){
