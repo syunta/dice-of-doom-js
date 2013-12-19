@@ -1,13 +1,15 @@
 $(function(){
 
+    /* Constants */
     var TABLE_SIZE = 3;
     var TURN = {A:{next:'B'},B:{next:'A'}};
     var LIMIT_VALUE_DICE_NUMBERS= 3;
 
+    /* Global Variables */
     var currentGameTree = {};
-
     var cache = {};
 
+    /* Starting */
     startApp();
 
     function test(gameTree){
@@ -268,29 +270,16 @@ $(function(){
     }
 
     function makePhaseActions(player,gameTable,removedDice,canPass,wasPassed,depth){
-        var key = generateCacheKey(player,gameTable,removedDice,canPass,wasPassed,depth);
-        if(!cache[key]){
-            cache[key] = {
-                player    : player,
-                gameTable : gameTable,
-                action    : listActions(player,gameTable,removedDice,canPass,wasPassed,depth)
-            };
-        }
-        return cache[key];
-    }
-
-    function generateCacheKey(player,gameTable,removedDice,canPass,wasPassed,depth){
-        var stringGameTable = '';
-        for(x = 0; x < TABLE_SIZE; x++){
-            for(y = 0; y < TABLE_SIZE; y++){
-                stringGameTable += gameTable[x][y].x;
-                stringGameTable += gameTable[x][y].y;
-                stringGameTable += gameTable[x][y].owner;
-                stringGameTable += gameTable[x][y].dice;
-            }
-        }
-        var key = player + stringGameTable + removedDice + canPass + wasPassed + depth;
-        return key;
+        return memoize(
+            function(){
+                return {
+                    player    : player,
+                    gameTable : gameTable,
+                    action    : listActions(player,gameTable,removedDice,canPass,wasPassed,depth)
+                };
+            },
+            generateCacheKey(player,gameTable,removedDice,canPass,wasPassed,depth)
+        );
     }
 
     function listActions(player,gameTable,removedDice,canPass,wasPassed,depth){
@@ -384,6 +373,25 @@ $(function(){
             score   : calculateConclusiveScore(gameTable)
         };
     }
+
+    /* Logic of Making Efficient */
+    function memoize(fn,key){
+        return cache[key] = cache[key] ? cache[key] : fn();
+    }
+
+    function generateCacheKey(player,gameTable,removedDice,canPass,wasPassed,depth){
+        var stringGameTable = '';
+        for(x = 0; x < TABLE_SIZE; x++){
+            for(y = 0; y < TABLE_SIZE; y++){
+                stringGameTable += gameTable[x][y].x;
+                stringGameTable += gameTable[x][y].y;
+                stringGameTable += gameTable[x][y].owner;
+                stringGameTable += gameTable[x][y].dice;
+            }
+        }
+        return player + stringGameTable + removedDice + canPass + wasPassed + depth;
+    }
+
 
     /* UI */
     function drawGameTable(gameTable){
